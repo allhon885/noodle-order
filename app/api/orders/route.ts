@@ -785,45 +785,35 @@ Number(old.total_amount);
 
 
 
-const result =
-
-await client.query(`
-
-UPDATE orders
-
-SET
-
-status=$1,
-
-payment_method=$2,
-
-cash_received=$3,
-
-change_amount=$4
+const paymentStatus =
+  body.status === "paid"
+    ? "paid"
+    : old.payment_status || "unpaid";
 
 
-WHERE id=$5
+const result = await client.query(`
 
+  UPDATE orders
 
-RETURNING *
+  SET
+    status = $1::text,
+    payment_status = 'paid',
+    payment_method = $2::text,
+    cash_received = $3::numeric,
+    change_amount = $4::numeric
 
+  WHERE id = $5::integer
+
+  RETURNING *
 
 `,
 [
-
-body.status,
-
-paymentMethod,
-
-cashReceived,
-
-changeAmount,
-
-id
-
-]
-
-);
+  body.status,
+  paymentMethod,
+  cashReceived,
+  changeAmount,
+  id
+]);
 
 
 

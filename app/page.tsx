@@ -256,50 +256,8 @@ loadCurrent();
 
 // กรองเมนู
 
-const currentMenus = menus.filter(item=>{
-
-
-if(selectedCategory==="ก๋วยเตี๋ยว"){
-
-return (
-
-item.category==="หมู" ||
-
-item.category==="เนื้อ"
-
-);
-
-}
-
-
-
-if(selectedCategory==="เกาเหลา"){
-
-return item.category==="เกาเหลา";
-
-}
-
-
-
-if(selectedCategory==="ของลวก"){
-
-return item.category==="ลวก";
-
-}
-
-
-
-if(selectedCategory==="เครื่องดื่ม"){
-
-return item.category.includes("เครื่อง");
-
-}
-
-
-
-return false;
-
-
+const currentMenus = menus.filter(item => {
+  return item.category === selectedCategory;
 });
 
 // =====================

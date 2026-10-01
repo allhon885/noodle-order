@@ -62,8 +62,9 @@ export async function GET() {
 
       FROM orders
 
+      WHERE DATE(created_at) = CURRENT_DATE
 
-      WHERE status IN (
+      AND status IN (
         'pending',
         'preparing',
         'completed',
@@ -120,7 +121,9 @@ export async function GET() {
 
 
 
-      WHERE o.status IN (
+      WHERE DATE(o.created_at) = CURRENT_DATE
+
+      AND o.status IN (
         'pending',
         'preparing',
         'completed',
