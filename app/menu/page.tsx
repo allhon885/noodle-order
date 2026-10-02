@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { categories as menuCategories } from "./categories";
 
 
 type MenuItem = {
@@ -449,25 +450,9 @@ export default function MenuPage(){
   // ======================
 
 
-  const categories = [
-
-
+  const filterCategories = [
     "ทั้งหมด",
-
-
-    ...Array.from(
-
-      new Set(
-
-        menus.map(
-          menu=>menu.category
-        )
-
-      )
-
-    )
-
-
+    ...menuCategories
   ];
 
 
@@ -603,24 +588,24 @@ export default function MenuPage(){
           >
 
 
-            <input
+            <select
+              value={form.category}
+              onChange={(e)=>setForm({
+                ...form,
+                category:e.target.value
+              })}
+            >
+              <option value="">
+                เลือกหมวดหมู่
+              </option>
 
-              value={search}
+              {menuCategories.map((cat)=>(
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
 
-              onChange={
-                e=>setSearch(e.target.value)
-              }
-
-              placeholder="🔍 ค้นหาเมนู"
-
-              className="
-              rounded-xl
-              border
-              px-4
-              py-3
-              "
-
-            />
+            </select>
 
 
 
@@ -642,7 +627,7 @@ export default function MenuPage(){
             >
 
               {
-                categories.map(item=>(
+                filterCategories.map(item=>(
 
                   <option
                     key={item}

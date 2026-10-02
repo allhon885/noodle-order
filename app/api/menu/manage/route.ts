@@ -104,13 +104,14 @@ export async function POST(
         name,
         category,
         description,
+        price,
         price_normal,
         price_special,
         is_active
       )
 
       VALUES
-      ($1,$2,$3,$4,$5,true)
+      ($1,$2,$3,$4,$4,$5,true)
 
       RETURNING *
       `,
