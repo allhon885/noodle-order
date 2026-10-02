@@ -64,6 +64,7 @@ const [menus,setMenus] =
 useState<MenuItem[]>([]);
 
 
+const [categories,setCategories] = useState<string[]>([]);
 
 const [tables,setTables] =
 useState<Table[]>([]);
@@ -104,17 +105,6 @@ useState(false);
 
 
 
-const categories = [
-
-"ก๋วยเตี๋ยว",
-
-"เกาเหลา",
-
-"ของลวก",
-
-"เครื่องดื่ม"
-
-];
 
 
 
@@ -133,11 +123,29 @@ const menuRes =
 await fetch("/api/menu");
 
 
-const menuData =
-await menuRes.json();
-
+const menuData = await menuRes.json();
 
 setMenus(menuData);
+
+
+const categoryList = [
+  ...new Set(
+    menuData.map(
+      (item:MenuItem)=>item.category
+    )
+  )
+];
+
+
+const cats: string[] = Array.from(
+  new Set(
+    menuData.map(
+      (item: MenuItem) => item.category
+    )
+  )
+);
+
+setCategories(cats);
 
 
 
@@ -938,9 +946,11 @@ mb-4
 
 [
 "เส้นเล็ก",
+"เส้นเล็ก",
 "เส้นใหญ่",
 "บะหมี่",
-"มาม่า"
+"มาม่า",
+"วุ้นเส้น",
 ]
 
 .map(x=>(

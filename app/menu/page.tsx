@@ -31,6 +31,8 @@ export default function MenuPage(){
 
   const [menus,setMenus] =
     useState<MenuItem[]>([]);
+  
+
 
 
 
@@ -985,29 +987,40 @@ export default function MenuPage(){
 
 
 
-            <input
-
-              placeholder="หมวดหมู่"
-
+            <select
               value={form.category}
+              onChange={(e)=>setForm({
+                ...form,
+                category:e.target.value
+              })}
+              className="w-full border rounded-xl px-4 py-3"
+            >
 
-              onChange={
-                e=>
-                setForm({
-                  ...form,
-                  category:e.target.value
-                })
-              }
+            <option value="">
+              เลือกหมวดหมู่
+            </option>
 
-              className="
-              mt-3
-              w-full
-              rounded-xl
-              border
-              p-3
-              "
+            <option value="ก๋วยเตี๋ยว">
+              ก๋วยเตี๋ยว
+            </option>
 
-            />
+            <option value="เกาเหลา">
+              เกาเหลา
+            </option>
+
+            <option value="ของลวก">
+              ของลวก
+            </option>
+
+            <option value="เครื่องดื่ม">
+              เครื่องดื่ม
+            </option>
+
+            <option value="ขนม">
+              ขนมหวาน
+            </option>
+
+            </select>
 
 
 
