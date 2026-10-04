@@ -17,6 +17,11 @@ export default function Navbar(){
     },
 
     {
+      name:"📋 ออเดอร์",
+      path:"/orders"
+    },
+
+    {
       name:"👨‍🍳 ครัว",
       path:"/kitchen"
     },

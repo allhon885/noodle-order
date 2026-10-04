@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 
 // ===============================
@@ -33,9 +35,13 @@ json_agg(
 
 json_build_object(
 
+'menuId',oi.menu_item_id,
+
 'menuName',m.name,
 
 'quantity',oi.quantity,
+
+'size',oi.size,
 
 'unitPrice',oi.unit_price,
 
@@ -237,8 +243,7 @@ SELECT *
 FROM orders
 
 WHERE table_number=$1
-
-AND status!='paid'
+AND status NOT IN ('paid', 'cancelled')
 
 ORDER BY id DESC
 
@@ -252,122 +257,245 @@ tableNumber
 );
 
 
-
-
-
-
 // =================================
-// มี order เดิม -> เพิ่มรายการ
+// มี Order เดิม → แทนที่รายการเดิม
+// ด้วย cart ปัจจุบัน
 // =================================
 
-if(oldOrder.rows.length){
+if (oldOrder.rows.length) {
+
+  const orderId =
+    oldOrder.rows[0].id;
+
+  // -------------------------------
+  // ลบรายการเดิมทั้งหมด
+  // -------------------------------
+
+  await client.query(
+    `
+    DELETE FROM order_items
+    WHERE order_id = $1
+    `,
+    [
+      orderId
+    ]
+  );
 
 
-const orderId =
-oldOrder.rows[0].id;
+  // -------------------------------
+  // เพิ่มรายการจาก cart ใหม่
+  // -------------------------------
+
+  let newTotal = 0;
+
+  for (const item of cart) {
+
+    const menuId =
+      Number(item.menuId);
+
+    const quantity =
+      Number(item.quantity);
+
+    if (!menuId || quantity <= 0) {
+
+      throw new Error(
+        "ข้อมูลรายการอาหารไม่ถูกต้อง"
+      );
+
+    }
 
 
+    // -------------------------------
+    // ดึงราคาเมนูจากฐานข้อมูล
+    // -------------------------------
 
-for(const item of cart){
-
-
-
-await client.query(`
-
-INSERT INTO order_items
-
-(
-order_id,
-menu_item_id,
-quantity,
-size,
-unit_price,
-subtotal,
-noodle,
-vegetable,
-note
-)
-
-
-VALUES
-
-($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    const menuResult =
+      await client.query(
+        `
+        SELECT
+          id,
+          name,
+          price_normal,
+          price_special,
+          is_active
+        FROM menu_items
+        WHERE id = $1
+        `,
+        [
+          menuId
+        ]
+      );
 
 
-`,
-[
+    if (menuResult.rows.length === 0) {
 
-orderId,
+      throw new Error(
+        `ไม่พบเมนู ID ${menuId}`
+      );
 
-item.menuId,
-
-item.quantity,
-
-item.size || "normal",
-
-item.unitPrice,
-
-Number(item.unitPrice)
-*
-Number(item.quantity),
-
-item.noodle || null,
-
-item.vegetable || null,
-
-item.note || null
-
-]
+    }
 
 
-);
+    const menu =
+      menuResult.rows[0];
 
+
+    if (!menu.is_active) {
+
+      throw new Error(
+        `เมนู ${menu.name} ปิดขายแล้ว`
+      );
+
+    }
+
+
+    // -------------------------------
+    // ขนาด
+    // -------------------------------
+
+    const size =
+      item.size === "special"
+        ? "special"
+        : "normal";
+
+
+    // -------------------------------
+    // ราคา
+    // -------------------------------
+
+    let unitPrice =
+      size === "special"
+        ? Number(menu.price_special)
+        : Number(menu.price_normal);
+
+
+    // ถ้าไม่มีราคาพิเศษ
+    // ให้ใช้ราคาธรรมดา
+
+    if (
+      size === "special" &&
+      (!unitPrice ||
+        Number.isNaN(unitPrice))
+    ) {
+
+      unitPrice =
+        Number(menu.price_normal);
+
+    }
+
+
+    if (
+      !unitPrice ||
+      Number.isNaN(unitPrice)
+    ) {
+
+      throw new Error(
+        `ไม่พบราคาของเมนู ${menu.name}`
+      );
+
+    }
+
+
+    // -------------------------------
+    // คำนวณ subtotal
+    // -------------------------------
+
+    const subtotal =
+      unitPrice * quantity;
+
+
+    newTotal += subtotal;
+
+
+    // -------------------------------
+    // INSERT รายการใหม่
+    // -------------------------------
+
+    await client.query(
+      `
+      INSERT INTO order_items
+      (
+        order_id,
+        menu_item_id,
+        quantity,
+        size,
+        unit_price,
+        subtotal,
+        noodle,
+        vegetable,
+        note
+      )
+
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9
+      )
+      `,
+      [
+        orderId,
+        menuId,
+        quantity,
+        size,
+        unitPrice,
+        subtotal,
+        item.noodle || null,
+        item.vegetable || null,
+        item.note || null
+      ]
+    );
+
+  }
+
+
+  // -------------------------------
+  // อัปเดตยอดรวม Order
+  // -------------------------------
+
+  const updatedOrder =
+    await client.query(
+      `
+      UPDATE orders
+
+      SET
+        total_amount = $1,
+        status = 'pending'
+
+      WHERE id = $2
+
+      RETURNING *
+      `,
+      [
+        newTotal,
+        orderId
+      ]
+    );
+
+
+  await client.query(
+    "COMMIT"
+  );
+
+
+  return NextResponse.json({
+    success: true,
+    message: "เพิ่มรายการสำเร็จ",
+    orderId,
+    order: updatedOrder.rows[0]
+  });
 
 }
 
 
 
 
-
-await client.query(`
-
-UPDATE orders
-
-SET total_amount =
-total_amount + $1
-
-
-WHERE id=$2
-
-
-`,
-[
-total,
-orderId
-]
-
-);
-
-
-
-
-await client.query("COMMIT");
-
-
-
-
-return NextResponse.json({
-
-success:true,
-
-message:"เพิ่มรายการสำเร็จ",
-
-orderId
-
-});
-
-
-}
 
 
 
@@ -642,272 +770,462 @@ client.release();
 
 
 
-
-
 // ===============================
 // PATCH UPDATE ORDER
 // ===============================
 
-
 export async function PATCH(
-request:Request
-){
+  request: Request
+) {
 
+  const client = await pool.connect();
 
-const client =
-await pool.connect();
+  try {
 
+    const body = await request.json();
 
+    const id = body.id || body.orderId;
 
-try{
+    if (!id) {
 
+      return NextResponse.json(
+        {
+          error: "ไม่พบ order id"
+        },
+        {
+          status: 400
+        }
+      );
 
-const body =
-await request.json();
+    }
 
+    await client.query("BEGIN");
 
 
-const id =
-body.id ||
-body.orderId;
+    // =================================
+    // ตรวจสอบ Order
+    // =================================
 
+    const oldResult = await client.query(
+      `
+      SELECT *
+      FROM orders
+      WHERE id = $1
+      FOR UPDATE
+      `,
+      [id]
+    );
 
 
-if(!id){
+    if (oldResult.rows.length === 0) {
 
-return NextResponse.json(
-{
-error:"ไม่พบ order id"
-},
-{
-status:400
-}
-);
+      throw new Error("ไม่พบ Order");
 
-}
+    }
 
 
+    const old = oldResult.rows[0];
 
-await client.query("BEGIN");
 
+    // =================================
+    // แก้ไขรายการอาหาร
+    // =================================
 
+    if (Array.isArray(body.items)) {
 
 
+      // ห้ามแก้ Order ที่จ่ายเงินแล้ว
+      if (
+        old.status === "paid" ||
+        old.payment_method
+      ) {
 
-const oldResult =
+        await client.query("ROLLBACK");
 
-await client.query(`
+        return NextResponse.json(
+          {
+            error: "ออเดอร์นี้ชำระเงินแล้ว ไม่สามารถแก้ไขได้"
+          },
+          {
+            status: 400
+          }
+        );
 
-SELECT *
+      }
 
-FROM orders
 
-WHERE id=$1
+      if (body.items.length === 0) {
 
+        await client.query("ROLLBACK");
 
-`,
-[
-id
-]
+        return NextResponse.json(
+          {
+            error: "ออเดอร์ต้องมีอย่างน้อย 1 รายการ"
+          },
+          {
+            status: 400
+          }
+        );
 
-);
+      }
 
+      // =================================
+      // รวมรายการซ้ำก่อนบันทึก
+      // =================================
 
+      const mergedItems: any[] = [];
 
+      for (const item of body.items) {
 
-if(oldResult.rows.length===0){
+        const menuId = Number(item.menuId);
+        const quantity = Number(item.quantity);
 
-throw new Error(
-"ไม่พบ Order"
-);
+        const existingIndex = mergedItems.findIndex(
+          x =>
+            Number(x.menuId) === menuId &&
+            x.size === (item.size === "special" ? "special" : "normal") &&
+            (x.noodle ?? null) === (item.noodle ?? null) &&
+            (x.vegetable ?? null) === (item.vegetable ?? null) &&
+            (x.note ?? null) === (item.note ?? null)
+        );
 
-}
+        if (existingIndex !== -1) {
 
+          mergedItems[existingIndex].quantity += quantity;
 
+        } else {
 
-const old =
-oldResult.rows[0];
+          mergedItems.push({
+            menuId,
+            quantity,
+            size:
+              item.size === "special"
+                ? "special"
+                : "normal",
+            noodle: item.noodle ?? null,
+            vegetable: item.vegetable ?? null,
+            note: item.note ?? null
+          });
 
+        }
+      }
 
 
+      // =================================
+      // ลบรายการเดิม
+      // =================================
 
+      await client.query(
+        `
+        DELETE FROM order_items
+        WHERE order_id = $1
+        `,
+        [id]
+      );
 
 
-let paymentMethod =
+      let total = 0;
 
-body.payment_method
-||
-old.payment_method;
 
+      // =================================
+      // เพิ่มรายการใหม่
+      // =================================
 
+      for (const item of mergedItems) {
 
-let cashReceived =
+        const menuId = Number(item.menuId);
+        const quantity = Number(item.quantity);
 
-body.cash_received
-??
-old.cash_received;
+        if (!menuId || quantity <= 0) {
 
+          throw new Error(
+            "ข้อมูลรายการอาหารไม่ถูกต้อง"
+          );
 
+        }
 
 
-let changeAmount =
+        // ---------------------------------
+        // ดึงราคาเมนูจากฐานข้อมูล
+        // ---------------------------------
 
-old.change_amount;
+        const menuResult = await client.query(
+          `
+          SELECT
+            id,
+            name,
+            price_normal,
+            price_special,
+            is_active
+          FROM menu_items
+          WHERE id = $1
+          `,
+          [menuId]
+        );
 
 
+        if (menuResult.rows.length === 0) {
 
+          throw new Error(
+            `ไม่พบเมนู ID ${menuId}`
+          );
 
+        }
 
 
-if(
+        const menu = menuResult.rows[0];
 
-paymentMethod==="cash"
 
-&&
+        if (!menu.is_active) {
 
-cashReceived
+          throw new Error(
+            `เมนู ${menu.name} ปิดขายแล้ว`
+          );
 
-){
+        }
 
-changeAmount =
 
-Number(cashReceived)
+        const size =
+          item.size === "special"
+            ? "special"
+            : "normal";
 
--
 
-Number(old.total_amount);
+        let unitPrice =
+          size === "special"
+            ? Number(menu.price_special)
+            : Number(menu.price_normal);
 
 
-}
+        // ถ้าราคาพิเศษไม่มี ให้ใช้ราคาธรรมดา
+        if (
+          size === "special" &&
+          (!unitPrice || Number.isNaN(unitPrice))
+        ) {
 
+          unitPrice =
+            Number(menu.price_normal);
 
+        }
 
 
+        if (!unitPrice || Number.isNaN(unitPrice)) {
 
+          throw new Error(
+            `ไม่พบราคาของเมนู ${menu.name}`
+          );
 
-const paymentStatus =
-  body.status === "paid"
-    ? "paid"
-    : old.payment_status || "unpaid";
+        }
 
 
-const result = await client.query(`
+        const subtotal =
+          unitPrice * quantity;
 
-  UPDATE orders
 
-  SET
-    status = $1::text,
-    payment_status = 'paid',
-    payment_method = $2::text,
-    cash_received = $3::numeric,
-    change_amount = $4::numeric
+        total += subtotal;
 
-  WHERE id = $5::integer
 
-  RETURNING *
+        await client.query(
+          `
+          INSERT INTO order_items
+          (
+            order_id,
+            menu_item_id,
+            quantity,
+            size,
+            unit_price,
+            subtotal,
+            noodle,
+            vegetable,
+            note
+          )
 
-`,
-[
-  body.status,
-  paymentMethod,
-  cashReceived,
-  changeAmount,
-  id
-]);
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7,
+            $8,
+            $9
+          )
+          `,
+          [
+            id,
+            menuId,
+            quantity,
+            size,
+            unitPrice,
+            subtotal,
+            item.noodle || null,
+            item.vegetable || null,
+            item.note || null
+          ]
+        );
 
+      }
 
 
+      // =================================
+      // อัปเดตยอดรวม
+      // =================================
 
+      const updatedOrder = await client.query(
+        `
+        UPDATE orders
 
+        SET
+          total_amount = $1
 
+        WHERE id = $2
 
-if(body.status==="paid"){
+        RETURNING *
+        `,
+        [
+          total,
+          id
+        ]
+      );
 
 
+      await client.query("COMMIT");
 
-await client.query(`
 
-UPDATE restaurant_tables
+      return NextResponse.json(
+        {
+          success: true,
+          message: "แก้ไขออเดอร์เรียบร้อย",
+          order: updatedOrder.rows[0]
+        }
+      );
 
-SET status='available'
+    }
 
-WHERE table_number=$1
 
+    // =================================
+    // PAYMENT
+    // =================================
 
-`,
-[
-old.table_number
-]
+    let paymentMethod =
+      body.payment_method ??
+      old.payment_method ??
+      null;
 
-);
 
+    let cashReceived =
+      body.cash_received ??
+      old.cash_received ??
+      null;
 
 
-}
+    let changeAmount =
+      old.change_amount ??
+      null;
 
 
+    if (
+      paymentMethod === "cash" &&
+      cashReceived !== null
+    ) {
 
+      changeAmount =
+        Number(cashReceived) -
+        Number(old.total_amount);
 
+    }
 
 
+    const result = await client.query(
+      `
+      UPDATE orders
 
-await client.query("COMMIT");
+      SET
+        status = $1::text,
+        payment_method = $2::text,
+        cash_received = $3::numeric,
+        change_amount = $4::numeric
 
+      WHERE id = $5::integer
 
+      RETURNING *
+      `,
+      [
+        body.status,
+        paymentMethod,
+        cashReceived,
+        changeAmount,
+        id
+      ]
+    );
 
 
-return NextResponse.json(
+    // =================================
+    // ชำระเงินแล้ว → ปลดโต๊ะ
+    // =================================
 
-result.rows[0]
+    if (
+      body.status === "paid" ||
+      body.status === "cancelled"
+    ) {
 
-);
+      await client.query(
+        `
+        UPDATE restaurant_tables
 
+        SET status = 'available'
 
+        WHERE table_number = $1
+        `,
+        [
+          old.table_number
+        ]
+      );
 
+    }
 
 
-}catch(error:any){
+    await client.query("COMMIT");
 
 
+    return NextResponse.json(
+      {
+        success: true,
+        order: result.rows[0]
+      }
+    );
 
-await client.query("ROLLBACK");
 
+  } catch (error: any) {
 
 
-console.error(
+    await client.query("ROLLBACK");
 
-"PATCH ORDER ERROR",
 
-error
+    console.error(
+      "PATCH ORDER ERROR",
+      error
+    );
 
-);
 
+    return NextResponse.json(
+      {
+        error:
+          error.message ||
+          "ไม่สามารถแก้ไขออเดอร์ได้"
+      },
+      {
+        status: 500
+      }
+    );
 
 
-return NextResponse.json(
+  } finally {
 
-{
-error:error.message
-},
+    client.release();
 
-{
-status:500
-}
-
-);
-
-
-
-}
-
-finally{
-
-
-client.release();
-
-
-}
-
-
+  }
 
 }

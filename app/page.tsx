@@ -75,6 +75,8 @@ const [selectedTable,setSelectedTable] =
 useState("");
 
 
+const [editingOrderId, setEditingOrderId] =
+useState<number | null>(null);
 
 const [selectedCategory,setSelectedCategory] =
 useState("ก๋วยเตี๋ยว");
@@ -203,7 +205,11 @@ const res = await fetch(
 
 const data = await res.json();
 
-
+if(data.id){
+  setEditingOrderId(Number(data.id));
+}else{
+  setEditingOrderId(null);
+}
 
 if(data.items?.length){
 
@@ -474,51 +480,46 @@ setLoading(true);
 
 
 
+const isEditing = editingOrderId !== null;
+
 const response = await fetch(
+  "/api/orders",
+  {
+    method: isEditing ? "PATCH" : "POST",
 
-"/api/orders",
+    headers:{
+      "Content-Type":"application/json"
+    },
 
-{
+    body: JSON.stringify(
+      isEditing
+        ? {
+            id: editingOrderId,
 
-method:"POST",
+            items: cart.map(item=>({
+              menuId:item.menuId,
+              quantity:item.quantity,
+              size:item.size,
+              noodle:item.noodle,
+              vegetable:item.vegetable,
+              note:item.note
+            }))
+          }
+        : {
+            tableNumber:selectedTable,
 
-headers:{
-
-"Content-Type":"application/json"
-
-},
-
-
-body:JSON.stringify({
-
-tableNumber:selectedTable,
-
-cart:cart.map(item=>(
-
-{
-
-menuId:item.menuId,
-
-quantity:item.quantity,
-
-unitPrice:item.price,
-
-size:item.size,
-
-noodle:item.noodle,
-
-vegetable:item.vegetable,
-
-note:item.note
-
-}
-
-))
-
-})
-
-}
-
+            cart:cart.map(item=>({
+              menuId:item.menuId,
+              quantity:item.quantity,
+              unitPrice:item.price,
+              size:item.size,
+              noodle:item.noodle,
+              vegetable:item.vegetable,
+              note:item.note
+            }))
+          }
+    )
+  }
 );
 
 
@@ -544,6 +545,8 @@ alert("✅ ส่งออเดอร์เข้าครัวแล้ว");
 // โต๊ะยังอยู่ เพื่อสั่งเพิ่ม
 
 setCart([]);
+
+setEditingOrderId(null);
 
 setNoodle("");
 
@@ -1350,10 +1353,7 @@ font-bold
 >
 
 <div>
-จำนวน {cart.reduce(
-(sum,item)=>sum+item.quantity
-,0
-)} รายการ
+จำนวน {cart.length} รายการ
 </div>
 
 

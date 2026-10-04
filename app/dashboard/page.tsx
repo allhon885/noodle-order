@@ -230,6 +230,7 @@ title="🧾 จำนวนบิล"
 value={
 summary.total_orders
 }
+unit="บิล"
 color="text-black"
 />
 
@@ -497,10 +498,12 @@ dataKey="sales"
 function Card({
 title,
 value,
+unit = "บาท",
 color
 }:{
 title:string;
 value:string;
+unit?:string;
 color:string;
 }){
 
@@ -538,7 +541,7 @@ ${color}
 
 {value}
 
-บาท
+{unit}
 
 </div>
 
