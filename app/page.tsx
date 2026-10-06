@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
 
 
 type MenuItem = {
@@ -88,7 +89,11 @@ useState("ก๋วยเตี๋ยว");
 const [cart,setCart] =
 useState<CartItem[]>([]);
 
+const cartRef = useRef<CartItem[]>([]);
 
+useEffect(() => {
+  cartRef.current = cart;
+}, [cart]);
 
 const [size,setSize] =
 useState("normal");
@@ -177,89 +182,121 @@ loadData();
 
 // โหลดบิลเดิมเมื่อเลือกโต๊ะ
 
-useEffect(()=>{
+useEffect(() => {
+
+  if (!selectedTable) return;
+
+  const loadCurrent = async () => {
+
+    try {
+
+      const res = await fetch(
+        `/api/orders/current?table=${selectedTable}`
+      );
+
+      const data = await res.json();
+
+      // =========================
+      // มีออเดอร์เดิมของโต๊ะ
+      // =========================
+
+      if (data.id) {
+
+        setEditingOrderId(Number(data.id));
+
+      } else {
+
+        setEditingOrderId(null);
+
+      }
 
 
-if(!selectedTable) return;
+      // =========================
+      // โต๊ะมีรายการเดิม
+      // =========================
+
+      if (data.items?.length) {
+
+        // ถ้ามีรายการที่กำลังคีย์อยู่
+        if (cartRef.current.length > 0) {
+
+          const confirmLoad = window.confirm(
+            "โต๊ะนี้มีออเดอร์เดิมอยู่แล้ว\n\n" +
+            "ต้องการโหลดออเดอร์เดิมของโต๊ะหรือไม่?\n\n" +
+            "OK = โหลดออเดอร์เดิม\n" +
+            "Cancel = เก็บรายการที่กำลังคีย์ไว้"
+          );
+
+          // กด Cancel
+          if (!confirmLoad) {
+
+            return;
+
+          }
+
+        }
 
 
+        // =========================
+        // โหลดรายการเดิมของโต๊ะ
+        // =========================
 
-const loadCurrent = async()=>{
+        setCart(
 
+          data.items.map((item: any) => ({
 
-try{
+            menuId: item.menu_item_id,
 
+            menuName: item.name,
 
-const res = await fetch(
+            category: item.category || "",
 
-`/api/orders/current?table=${selectedTable}`
+            quantity: Number(item.quantity),
 
-);
+            price: Number(item.unit_price),
 
+            size: item.size || "normal",
 
+            noodle: item.noodle || "",
 
-const data = await res.json();
+            vegetable: item.vegetable || "ปกติ",
 
-if(data.id){
-  setEditingOrderId(Number(data.id));
-}else{
-  setEditingOrderId(null);
-}
+            note: item.note || null
 
-if(data.items?.length){
+          }))
 
-
-setCart(
-
-data.items.map((item:any)=>({
-
-menuId:item.menu_item_id,
-
-menuName:item.name,
-
-category:item.category || "",
-
-quantity:Number(item.quantity),
-
-price:Number(item.unit_price),
-
-size:item.size || "normal",
-
-noodle:item.noodle || "",
-
-vegetable:item.vegetable || "ปกติ",
-
-note:item.note || null
-
-}))
-
-);
+        );
 
 
-}else{
+      } else {
+
+        // =========================
+        // โต๊ะยังไม่มีออเดอร์
+        // =========================
+
+        // สำคัญมาก:
+        // ห้าม setCart([])
+        // เพราะอาจเป็นรายการที่พนักงานคีย์ไว้ก่อนเลือกโต๊ะ
+
+        console.log(
+          "โต๊ะยังไม่มีออเดอร์เดิม - เก็บรายการปัจจุบันไว้"
+        );
+
+      }
 
 
-setCart([]);
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  };
 
 
-}
+  loadCurrent();
 
-
-
-}catch(error){
-
-console.error(error);
-
-}
-
-
-};
-
-
-loadCurrent();
-
-
-},[selectedTable]);
+}, [selectedTable]);
 
 
 
@@ -354,8 +391,11 @@ const addMenu = (item: MenuItem) => {
   // NOODLE
   // =====================
 
+  const isLuiSuan =
+  item.name === "ลุยสวน";
+
   const itemNoodle =
-    isDrink || isDessert
+    isDrink || isDessert || isLuiSuan
       ? ""
       : noodle;
 
@@ -365,7 +405,7 @@ const addMenu = (item: MenuItem) => {
   // =====================
 
   const itemVegetable =
-    isDrink || isDessert
+    isDrink || isDessert || isLuiSuan
       ? ""
       : vegetable;
 

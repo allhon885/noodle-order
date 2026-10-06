@@ -367,257 +367,360 @@ font-bold
 
 
 
-
-
 {
+  selected && (
 
-selected &&
+    <div
+      className="
+        fixed
+        inset-0
+        z-50
+        flex
+        items-center
+        justify-center
+        bg-black/50
+        p-4
+      "
+      onClick={() => setSelected(null)}
+    >
 
-<div
-className="
-mt-6
-bg-white
-rounded-xl
-p-6
-max-w-md
-shadow
-"
->
+      <div
+        className="
+          relative
+          w-full
+          max-w-md
+          max-h-[90vh]
+          overflow-y-auto
+          rounded-2xl
+          bg-white
+          p-6
+          shadow-2xl
+        "
+        onClick={(e) => e.stopPropagation()}
+      >
 
+        {/* ========================= */}
+        {/* ปุ่มปิด */}
+        {/* ========================= */}
 
-<div
-className="
-text-center
-"
->
-
-
-<h2
-className="
-text-2xl
-font-bold
-"
->
-
-{shop?.shop_name || "Noodle POS"}
-
-</h2>
-
-
-<div>
-
-ใบเสร็จรับเงิน
-
-</div>
-
-
-</div>
-
-
-
-
-<hr className="my-4"/>
-
-
-
-<div>
-
-เลขที่:
-{selected.order_number}
-
-</div>
+        <button
+          type="button"
+          onClick={() => setSelected(null)}
+          className="
+            absolute
+            right-4
+            top-4
+            h-9
+            w-9
+            rounded-full
+            bg-gray-100
+            text-xl
+            font-bold
+            text-gray-600
+            hover:bg-gray-200
+          "
+        >
+          ×
+        </button>
 
 
-<div>
+        {/* ========================= */}
+        {/* หัวใบเสร็จ */}
+        {/* ========================= */}
 
-โต๊ะ:
-{selected.table_number}
+        <div className="pr-10 text-center">
 
-</div>
+          <h2 className="text-2xl font-bold">
+            {shop?.shop_name || "ก๋วยเตี๋ยวหอมตุ๋น"}
+          </h2>
 
+          {shop?.phone && (
+            <div className="text-sm text-gray-500">
+              โทร {shop.phone}
+            </div>
+          )}
 
+          {shop?.address && (
+            <div className="text-sm text-gray-500">
+              {shop.address}
+            </div>
+          )}
 
+          <div className="mt-2 font-bold">
+            ใบเสร็จรับเงิน
+          </div>
 
-
-<div className="mt-4">
-
-
-{
-
-selected.items.map(
-
-(item,index)=>(
-
-
-<div
-key={index}
-className="
-flex
-justify-between
-border-b
-py-2
-"
->
+        </div>
 
 
-<span>
-
-{item.menuName}
-
-x{item.quantity}
-
-</span>
+        <hr className="my-4" />
 
 
-<span>
+        {/* ========================= */}
+        {/* ข้อมูลออเดอร์ */}
+        {/* ========================= */}
 
-{money(item.subtotal)}
+        <div className="space-y-1 text-sm">
 
-</span>
+          <div>
+            เลขที่: {selected.order_number}
+          </div>
+
+          <div>
+            โต๊ะ: {selected.table_number}
+          </div>
+
+          <div>
+            วันที่:{" "}
+            {new Date(
+              selected.created_at
+            ).toLocaleString("th-TH")}
+          </div>
+
+        </div>
 
 
-</div>
+        {/* ========================= */}
+        {/* รายการอาหาร */}
+        {/* ========================= */}
+
+        <div className="mt-4">
+
+          {
+            selected.items.map(
+              (item, index) => (
+
+                <div
+                  key={index}
+                  className="
+                    border-b
+                    py-3
+                  "
+                >
+
+                  <div
+                    className="
+                      flex
+                      justify-between
+                      gap-3
+                      font-bold
+                    "
+                  >
+
+                    <span>
+                      {item.menuName} x{item.quantity}
+                    </span>
+
+                    <span className="whitespace-nowrap">
+                      {money(item.subtotal)}
+                    </span>
+
+                  </div>
 
 
-)
+                  {
+                    (
+                      item.noodle ||
+                      item.vegetable
+                    ) && (
 
-)
+                      <div
+                        className="
+                          mt-1
+                          text-sm
+                          text-gray-500
+                        "
+                      >
 
+                        {
+                          item.noodle && (
+                            <>
+                              เส้น {item.noodle}
+                            </>
+                          )
+                        }
+
+                        {
+                          item.noodle &&
+                          item.vegetable &&
+                          " • "
+                        }
+
+                        {
+                          item.vegetable && (
+                            <>
+                              ผัก {item.vegetable}
+                            </>
+                          )
+                        }
+
+                      </div>
+
+                    )
+                  }
+
+                </div>
+
+              )
+            )
+          }
+
+        </div>
+
+
+        {/* ========================= */}
+        {/* รวมเงิน */}
+        {/* ========================= */}
+
+        <div
+          className="
+            mt-5
+            flex
+            justify-between
+            border-t-2
+            pt-4
+            text-xl
+            font-bold
+          "
+        >
+
+          <span>
+            รวม
+          </span>
+
+          <span>
+            {money(selected.total_amount)} บาท
+          </span>
+
+        </div>
+
+
+        {/* ========================= */}
+        {/* การชำระเงิน */}
+        {/* ========================= */}
+
+        <div className="mt-4">
+
+          <div className="font-bold">
+            ชำระโดย
+          </div>
+
+          <div className="mt-1">
+
+            {
+              selected.payment_method === "cash"
+                ? "💵 เงินสด"
+                : "📱 โอนเงิน"
+            }
+
+          </div>
+
+
+          {
+            selected.payment_method === "cash" && (
+
+              <div className="mt-2 space-y-1">
+
+                <div>
+                  รับเงิน:{" "}
+                  {money(selected.cash_received)} บาท
+                </div>
+
+                <div>
+                  เงินทอน:{" "}
+                  {money(selected.change_amount)} บาท
+                </div>
+
+              </div>
+
+            )
+          }
+
+        </div>
+
+
+        {/* ========================= */}
+        {/* ข้อความท้ายใบเสร็จ */}
+        {/* ========================= */}
+
+        {
+          shop?.receipt_footer && (
+
+            <div
+              className="
+                mt-5
+                border-t
+                pt-4
+                text-center
+                text-sm
+                text-gray-500
+              "
+            >
+              {shop.receipt_footer}
+            </div>
+
+          )
+        }
+
+
+        {/* ========================= */}
+        {/* ปุ่ม */}
+        {/* ========================= */}
+
+        <div
+          className="
+            mt-6
+            grid
+            grid-cols-2
+            gap-3
+          "
+        >
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="
+              rounded-xl
+              bg-black
+              py-3
+              font-bold
+              text-white
+              hover:bg-gray-800
+            "
+          >
+            🖨️ พิมพ์
+          </button>
+
+
+          <button
+            type="button"
+            onClick={() => setSelected(null)}
+            className="
+              rounded-xl
+              bg-gray-200
+              py-3
+              font-bold
+              text-gray-700
+              hover:bg-gray-300
+            "
+          >
+            ✕ ปิด
+          </button>
+
+        </div>
+
+
+      </div>
+
+    </div>
+
+  )
 }
 
 
-
 </div>
-
-
-
-
-
-<div
-className="
-mt-5
-text-xl
-font-bold
-flex
-justify-between
-"
->
-
-<span>
-
-รวม
-
-</span>
-
-
-<span>
-
-{money(selected.total_amount)}
-
-บาท
-
-</span>
-
-
-</div>
-
-
-
-
-
-
-<div className="mt-3">
-
-
-ชำระโดย:
-
-{
-
-selected.payment_method==="cash"
-
-?
-
-"💵 เงินสด"
-
-:
-
-"📱 โอนเงิน"
-
-}
-
-
-</div>
-
-
-
-
-
-{
-
-selected.payment_method==="cash"
-
-&&
-
-<>
-
-<div>
-
-รับเงิน:
-{money(selected.cash_received)}
-
-</div>
-
-
-<div>
-
-เงินทอน:
-{money(selected.change_amount)}
-
-</div>
-
-</>
-
-
-}
-
-
-
-
-
-<button
-
-onClick={()=>window.print()}
-
-className="
-mt-5
-w-full
-bg-black
-text-white
-rounded-xl
-py-3
-"
-
->
-
-🖨️ พิมพ์
-
-</button>
-
-
-
-
-</div>
-
-
-}
-
-
-
-</div>
-
 
 </main>
-
 
 );
 

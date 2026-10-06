@@ -74,13 +74,11 @@ export async function GET(){
 
 export async function PATCH(
   request: Request
-){
+) {
 
   try {
 
-
     const body = await request.json();
-
 
     const {
       shop_name,
@@ -90,30 +88,78 @@ export async function PATCH(
     } = body;
 
 
+    // =========================
+    // หา ID ของข้อมูลร้าน
+    // =========================
+
+    const existing = await pool.query(`
+      SELECT id
+      FROM shop_settings
+      ORDER BY id
+      LIMIT 1
+    `);
+
+
+    // =========================
+    // ถ้ายังไม่มีข้อมูลร้าน
+    // ให้สร้างใหม่
+    // =========================
+
+    if (existing.rows.length === 0) {
+
+      const result = await pool.query(`
+        INSERT INTO shop_settings (
+          shop_name,
+          phone,
+          address,
+          receipt_footer
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `,
+      [
+        shop_name,
+        phone,
+        address,
+        receipt_footer
+      ]);
+
+
+      return NextResponse.json(
+        result.rows[0]
+      );
+
+    }
+
+
+    // =========================
+    // มีข้อมูลร้านอยู่แล้ว
+    // =========================
+
+    const shopId =
+      existing.rows[0].id;
+
 
     const result = await pool.query(`
-
       UPDATE shop_settings
 
       SET
-        shop_name=$1,
-        phone=$2,
-        address=$3,
-        receipt_footer=$4,
-        updated_at=NOW()
+        shop_name = $1,
+        phone = $2,
+        address = $3,
+        receipt_footer = $4
 
-      WHERE id = 1
+      WHERE id = $5
 
       RETURNING *
-
     `,
     [
       shop_name,
       phone,
       address,
-      receipt_footer
+      receipt_footer,
+      shopId
     ]);
-
 
 
     return NextResponse.json(
@@ -121,21 +167,20 @@ export async function PATCH(
     );
 
 
-
-  }catch(error){
+  } catch (error) {
 
     console.error(
-      "UPDATE SHOP ERROR",
+      "UPDATE SHOP ERROR:",
       error
     );
 
 
     return NextResponse.json(
       {
-        error:"แก้ไขข้อมูลร้านไม่สำเร็จ"
+        error: "แก้ไขข้อมูลร้านไม่สำเร็จ"
       },
       {
-        status:500
+        status: 500
       }
     );
 
