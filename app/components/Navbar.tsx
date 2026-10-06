@@ -101,7 +101,7 @@ export default function Navbar(){
           "
         >
 
-          🍜 Noodle POS
+          🍜 Hommm TooN
 
         </div>
 

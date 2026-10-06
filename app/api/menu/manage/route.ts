@@ -301,49 +301,45 @@ export async function PATCH(
 
 
 // =====================
-// DELETE MENU
+// DELETE / DISABLE MENU
 // =====================
 export async function DELETE(
-  request:Request
-){
+  request: Request
+) {
 
-  try{
+  try {
 
+    const body = await request.json();
 
-    const body =
-      await request.json();
-
-
-    const id =
-      Number(body.id);
+    const id = Number(body.id);
 
 
-
-    if(!id){
+    if (!id) {
 
       return NextResponse.json(
         {
-          error:"ไม่พบ id เมนู"
+          error: "ไม่พบ id เมนู"
         },
         {
-          status:400
+          status: 400
         }
       );
 
     }
 
 
-
-    const result =
-      await pool.query(
+    // ปิดการขายแทนการลบข้อมูลจริง
+    const result = await pool.query(
 
       `
-      DELETE FROM public.menu_items
+      UPDATE public.menu_items
 
-      WHERE id=$1
+      SET
+        is_active = false
+
+      WHERE id = $1
 
       RETURNING *
-
       `,
 
       [id]
@@ -351,44 +347,45 @@ export async function DELETE(
     );
 
 
-
-    if(result.rowCount===0){
+    if (result.rowCount === 0) {
 
       return NextResponse.json(
         {
-          error:"ไม่พบเมนู"
+          error: "ไม่พบเมนู"
         },
         {
-          status:404
+          status: 404
         }
       );
 
     }
 
 
-
     return NextResponse.json({
 
-      success:true,
+      success: true,
 
-      menu:result.rows[0]
+      message: "ปิดการขายเมนูเรียบร้อยแล้ว",
+
+      menu: result.rows[0]
 
     });
 
 
+  } catch (error) {
 
-  }catch(error){
-
-
-    console.error(error);
+    console.error(
+      "DISABLE MENU ERROR",
+      error
+    );
 
 
     return NextResponse.json(
       {
-        error:"ไม่สามารถลบเมนูได้"
+        error: "ไม่สามารถปิดการขายเมนูได้"
       },
       {
-        status:500
+        status: 500
       }
     );
 

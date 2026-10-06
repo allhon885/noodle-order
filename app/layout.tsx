@@ -1,30 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Kanit } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets:["latin"],
+const kanit = Kanit({
+  variable: "--font-kanit",
+  subsets: ["thai"],
+  weight: [
+    "300",
+    "400",
+    "500",
+    "600",
+    "700",
+    "800",
+  ],
 });
-
-
-const geistMono = Geist_Mono({
-  variable:"--font-geist-mono",
-  subsets:["latin"],
-});
-
 
 
 export const metadata: Metadata = {
 
-  title:"Noodle POS",
+  title: "Noodle POS",
 
-  description:"Restaurant Order System",
+  description: "Restaurant Order System",
 
 };
-
 
 
 export default function RootLayout({
@@ -32,43 +32,38 @@ export default function RootLayout({
 }: LayoutProps<"/">) {
 
 
-return (
+  return (
 
-<html
-lang="th"
-className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
->
+    <html
+      lang="th"
+      className={`${kanit.variable} h-full antialiased`}
+    >
 
+      <body
+        className="
+        min-h-full
+        flex
+        flex-col
+        font-sans
+        "
+      >
 
-<body
-className="
-min-h-full
-flex
-flex-col
-"
->
+        <Navbar />
 
+        <main
+          className="
+          flex-1
+          "
+        >
 
-<Navbar />
+          {children}
 
+        </main>
 
-<main
-className="
-flex-1
-"
->
+      </body>
 
-{children}
+    </html>
 
-</main>
-
-
-</body>
-
-
-</html>
-
-);
-
+  );
 
 }

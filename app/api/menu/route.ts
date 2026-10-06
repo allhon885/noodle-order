@@ -10,26 +10,15 @@ try{
 const result = await pool.query(`
 
 SELECT
-
-id,
-
-name,
-
-category,
-
-description,
-
-price_normal,
-
-price_special
-
-
+  id,
+  name,
+  category,
+  description,
+  price_normal,
+  price_special,
+  image_url
 FROM menu_items
-
-
 WHERE is_active = true
-
-
 ORDER BY id
 
 `);

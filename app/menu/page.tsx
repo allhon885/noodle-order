@@ -177,6 +177,80 @@ export default function MenuPage(){
 
   };
 
+  // ======================
+  // ปิดการขาย / ลบเมนู
+  // ======================
+
+  const deleteMenu = async (id:number) => {
+
+    const menu = menus.find(
+      item => item.id === id
+    );
+
+    if (!menu) return;
+
+
+    const confirmDelete = window.confirm(
+      `ต้องการปิดการขายเมนู "${menu.name}" ใช่หรือไม่?`
+    );
+
+
+    if (!confirmDelete) return;
+
+
+    try {
+
+      const response = await fetch(
+        "/api/menu/manage",
+        {
+          method:"DELETE",
+
+          headers:{
+            "Content-Type":"application/json"
+          },
+
+          body:JSON.stringify({
+            id
+          })
+        }
+      );
+
+
+      const data = await response.json();
+
+
+      if(!response.ok){
+
+        alert(
+          data.error ||
+          "ปิดการขายเมนูไม่สำเร็จ"
+        );
+
+        return;
+
+      }
+
+
+      alert(
+        `ปิดการขาย "${menu.name}" เรียบร้อยแล้ว`
+      );
+
+
+      loadMenu();
+
+
+    }catch(error){
+
+      console.error(error);
+
+      alert(
+        "เกิดข้อผิดพลาดในการปิดการขายเมนู"
+      );
+
+    }
+
+  };
+
 
 
 
@@ -824,7 +898,7 @@ export default function MenuPage(){
                 className="
                 mt-5
                 grid
-                grid-cols-2
+                grid-cols-3
                 gap-3
                 "
               >
@@ -893,6 +967,23 @@ export default function MenuPage(){
                   }
 
 
+                </button>
+
+                <button
+
+                  onClick={() =>
+                    deleteMenu(menu.id)
+                  }
+
+                  className="
+                  rounded-xl
+                  bg-red-100
+                  py-3
+                  font-bold
+                  text-red-700
+                  "
+                >
+                  🗑️ ปิดการขาย
                 </button>
 
 
@@ -1111,7 +1202,7 @@ export default function MenuPage(){
               className="
               mt-5
               grid
-              grid-cols-2
+              grid-cols-3
               gap-3
               "
             >

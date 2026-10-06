@@ -110,6 +110,40 @@ export default function DashboardPage(){
   },[]);
 
 
+    const getUnit = (menuName: string) => {
+
+      // ขนมถ้วยขายเป็นคู่
+      if (menuName.includes("ขนมถ้วย")) {
+        return "คู่";
+      }
+
+      // เป๊ปซี่ขายเป็นขวด
+      if (menuName.includes("เป๊ปซี่")) {
+        return "ขวด";
+      }
+
+      // เครื่องดื่มขายเป็นขวด
+      if (menuName.includes("เครื่องดื่ม")) {
+        return "ขวด";
+      }
+
+      // ก๋วยเตี๋ยว / เกาเหลาขายเป็นชาม
+      if (
+        menuName.includes("ก๋วยเตี๋ยว") ||
+        menuName.includes("เกาเหลา")
+      ) {
+        return "ชาม";
+      }
+
+      // ลุยสวนขายเป็นชุด
+      if (menuName.includes("ลุยสวน")) {
+        return "กล่อง";
+      }
+
+      // ค่าเริ่มต้น
+      return "รายการ";
+    };
+
 
 
 
@@ -351,11 +385,11 @@ text-right
 >
 
 <div
-className="
-font-bold
+  className="
+  font-bold
 "
 >
-{menu.total_quantity} ชาม
+  {menu.total_quantity} {getUnit(menu.name)}
 </div>
 
 
