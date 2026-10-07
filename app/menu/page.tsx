@@ -382,20 +382,20 @@ export default function MenuPage(){
 
 
 
-  // ======================
+  // =====================
   // เปิด Modal แก้ไข
-  // ======================
-
+  // =====================
 
   const openEdit = (
-    menu:MenuItem
-  )=>{
+    menu: MenuItem
+  ) => {
 
-
-    setEditMenu(menu);
+    setEditMenu({
+      ...menu,
+      category: menu.category || ""
+    });
 
     setShowEdit(true);
-
 
   };
 
@@ -969,22 +969,7 @@ export default function MenuPage(){
 
                 </button>
 
-                <button
-
-                  onClick={() =>
-                    deleteMenu(menu.id)
-                  }
-
-                  className="
-                  rounded-xl
-                  bg-red-100
-                  py-3
-                  font-bold
-                  text-red-700
-                  "
-                >
-                  🗑️ ปิดการขาย
-                </button>
+            
 
 
               </div>
@@ -1092,23 +1077,27 @@ export default function MenuPage(){
             </option>
 
             <option value="ก๋วยเตี๋ยว">
-              ก๋วยเตี๋ยว
+              🍜 ก๋วยเตี๋ยว
             </option>
 
             <option value="เกาเหลา">
-              เกาเหลา
+              🍲 เกาเหลา
             </option>
 
-            <option value="ของลวก">
-              ของลวก
+            <option value="ลวกจิ้ม">
+              🥩 ลวกจิ้ม
             </option>
 
             <option value="เครื่องดื่ม">
-              เครื่องดื่ม
+              🥤 เครื่องดื่ม
             </option>
 
             <option value="ขนม">
-              ขนมหวาน
+              🍰 ขนมหวาน
+            </option>
+
+            <option value="อื่นๆ">
+              📦 อื่นๆ
             </option>
 
             </select>
@@ -1265,140 +1254,214 @@ export default function MenuPage(){
 
 
 
+    {/* Modal แก้ไขเมนู */}
 
-      {/* Modal แก้ไขเมนู */}
-
-
-      {
+    {
       showEdit && editMenu && (
 
         <div
           className="
-          fixed
-          inset-0
-          flex
-          items-center
-          justify-center
-          bg-black/40
+            fixed
+            inset-0
+            z-50
+            flex
+            items-center
+            justify-center
+            bg-black/40
+            p-4
           "
         >
 
-
           <div
             className="
-            w-full
-            max-w-md
-            rounded-2xl
-            bg-white
-            p-6
+              w-full
+              max-w-md
+              rounded-2xl
+              bg-white
+              p-6
+              shadow-2xl
             "
           >
 
-
+            {/* หัวข้อ */}
             <h2
               className="
-              text-2xl
-              font-bold
+                text-2xl
+                font-bold
               "
             >
-
               ✏️ แก้ไขเมนู
-
             </h2>
 
 
-
+            {/* ชื่อเมนู */}
+            <label className="mt-4 block font-bold">
+              ชื่อเมนู
+            </label>
 
             <input
-
-              value={editMenu.name}
-
-              onChange={
-                e=>
+              value={editMenu.name || ""}
+              onChange={(e) =>
                 setEditMenu({
-
                   ...editMenu,
-
-                  name:e.target.value
-
+                  name: e.target.value
                 })
               }
-
-
               className="
-              mt-4
-              w-full
-              rounded-xl
-              border
-              p-3
+                mt-2
+                w-full
+                rounded-xl
+                border
+                p-3
               "
-
             />
 
 
+            {/* หมวดหมู่ */}
+            <label className="mt-4 block font-bold">
+              หมวดหมู่
+            </label>
 
-            <input
-
-              type="number"
-
-              value={editMenu.price_normal}
-
-              onChange={
-                e=>
+            <select
+              value={editMenu.category || ""}
+              onChange={(e) =>
                 setEditMenu({
-
                   ...editMenu,
-
-                  price_normal:e.target.value
-
+                  category: e.target.value
                 })
               }
-
-
               className="
-              mt-3
-              w-full
-              rounded-xl
-              border
-              p-3
+                mt-2
+                w-full
+                rounded-xl
+                border
+                bg-white
+                p-3
               "
-
-            />
-
-
-
-
-            <button
-
-              onClick={updateMenu}
-
-              className="
-              mt-5
-              w-full
-              rounded-xl
-              bg-green-500
-              py-3
-              font-bold
-              text-white
-              "
-
             >
 
-              บันทึกการแก้ไข
+              <option value="">
+                -- เลือกหมวดหมู่ --
+              </option>
 
-            </button>
+              <option value="ก๋วยเตี๋ยว">
+                🍜 ก๋วยเตี๋ยว
+              </option>
+
+              <option value="เกาเหลา">
+                🍲 เกาเหลา
+              </option>
+
+              <option value="ลวกจิ้ม">
+                🥩 ลวกจิ้ม
+              </option>
+
+              <option value="เครื่องดื่ม">
+                🥤 เครื่องดื่ม
+              </option>
+
+              <option value="ขนมหวาน">
+                🍮 ขนมหวาน
+              </option>
+
+            </select>
 
 
+            {/* ราคาธรรมดา */}
+            <label className="mt-4 block font-bold">
+              ราคาธรรมดา
+            </label>
+
+            <input
+              type="number"
+              value={editMenu.price_normal || ""}
+              onChange={(e) =>
+                setEditMenu({
+                  ...editMenu,
+                  price_normal: e.target.value
+                })
+              }
+              className="
+                mt-2
+                w-full
+                rounded-xl
+                border
+                p-3
+              "
+            />
+
+            {/* ราคาพิเศษ */}
+
+              <label className="mt-4 block font-bold">
+                ราคาพิเศษ
+              </label>
+
+              <input
+                type="number"
+                value={editMenu.price_special || ""}
+                onChange={(e) =>
+                  setEditMenu({
+                    ...editMenu,
+                    price_special: e.target.value
+                  })
+                }
+                className="
+                  mt-2
+                  w-full
+                  rounded-xl
+                  border
+                  p-3
+                "
+              />
+
+
+            {/* ปุ่ม */}
+            <div
+              className="
+                mt-5
+                grid
+                grid-cols-2
+                gap-3
+              "
+            >
+
+              <button
+                onClick={updateMenu}
+                className="
+                  rounded-xl
+                  bg-green-500
+                  py-3
+                  font-bold
+                  text-white
+                "
+              >
+                💾 บันทึก
+              </button>
+
+
+              <button
+                onClick={() => {
+                  setShowEdit(false);
+                  setEditMenu(null);
+                }}
+                className="
+                  rounded-xl
+                  bg-gray-200
+                  py-3
+                  font-bold
+                "
+              >
+                ✕ ยกเลิก
+              </button>
+
+            </div>
 
           </div>
 
-
         </div>
 
-
       )
-      }
-
+    }
 
 
     </main>

@@ -334,6 +334,12 @@ const addMenu = (item: MenuItem) => {
   const isDessert =
     item.category === "ขนมหวาน";
 
+  const isBlanch =
+    item.category === "ลวกจิ้ม";
+
+  const isLuiSuan =
+    item.name === "ลุยสวน";
+
 
   // =====================
   // PRICE
@@ -354,6 +360,13 @@ const addMenu = (item: MenuItem) => {
 
     // ขนมหวานขายคู่ละ 10 บาท
     price = 10;
+
+  }
+
+  // ลวกจิ้ม
+  else if (isBlanch) {
+
+    price = Number(item.price_normal);
 
   }
 
@@ -382,7 +395,10 @@ const addMenu = (item: MenuItem) => {
   // =====================
 
   const itemSize =
-    isDrink
+    isDrink ||
+    isDessert ||
+    isBlanch ||
+    isLuiSuan
       ? "normal"
       : size;
 
@@ -391,11 +407,11 @@ const addMenu = (item: MenuItem) => {
   // NOODLE
   // =====================
 
-  const isLuiSuan =
-  item.name === "ลุยสวน";
-
   const itemNoodle =
-    isDrink || isDessert || isLuiSuan
+    isDrink ||
+    isDessert ||
+    isBlanch ||
+    isLuiSuan
       ? ""
       : noodle;
 
@@ -405,9 +421,17 @@ const addMenu = (item: MenuItem) => {
   // =====================
 
   const itemVegetable =
-    isDrink || isDessert || isLuiSuan
+    isDrink ||
+    isDessert ||
+    isBlanch ||
+    isLuiSuan
       ? ""
       : vegetable;
+
+
+
+  const isOther =
+  item.category === "อื่นๆ";
 
 
   // =====================
@@ -453,6 +477,7 @@ const addMenu = (item: MenuItem) => {
     );
 
     return;
+
   }
 
 
@@ -925,6 +950,7 @@ return (
           {(
             selectedCategory === "ก๋วยเตี๋ยว" ||
             selectedCategory === "เกาเหลา" ||
+            selectedCategory === "ลวกจิ้ม" ||
             selectedCategory === "ขนมหวาน"
           ) && (
 

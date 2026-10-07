@@ -50,6 +50,9 @@ export default function DashboardPage(){
   const [salesChart,setSalesChart] =
     useState<SalesChart[]>([]);
 
+  const [range, setRange] =
+  useState("7");
+
 
 
   const loadDashboard = async()=>{
@@ -57,7 +60,7 @@ export default function DashboardPage(){
     try{
 
       const res =
-        await fetch("/api/dashboard");
+        await fetch(`/api/dashboard?range=${range}`);
 
 
       const data =
@@ -91,23 +94,19 @@ export default function DashboardPage(){
 
 
 
-  useEffect(()=>{
+    useEffect(()=>{
 
+      loadDashboard();
 
-    loadDashboard();
+      const timer =
+        setInterval(
+          loadDashboard,
+          30000
+        );
 
+      return ()=>clearInterval(timer);
 
-    const timer =
-      setInterval(
-        loadDashboard,
-        30000
-      );
-
-
-    return ()=>clearInterval(timer);
-
-
-  },[]);
+    },[range]);
 
 
     const getUnit = (menuName: string) => {
@@ -213,15 +212,83 @@ font-bold
 
 
 <p
-className="
-mt-1
-text-gray-500
+  className="
+  mt-1
+  text-gray-500
 "
 >
-สรุปยอดขายประจำวัน
+  {
+    range === "today"
+      ? "สรุปยอดขายวันนี้"
+      : range === "7"
+        ? "สรุปยอดขายย้อนหลัง 7 วัน"
+        : "สรุปยอดขายย้อนหลัง 30 วัน"
+  }
 </p>
 
+<div
+  className="
+  mt-4
+  flex
+  flex-wrap
+  gap-3
+"
+>
 
+  <button
+    onClick={() => setRange("today")}
+    className={`
+      rounded-xl
+      px-5
+      py-3
+      font-bold
+      ${
+        range === "today"
+          ? "bg-orange-500 text-white"
+          : "bg-white text-gray-700 shadow"
+      }
+    `}
+  >
+    📅 วันนี้
+  </button>
+
+
+  <button
+    onClick={() => setRange("7")}
+    className={`
+      rounded-xl
+      px-5
+      py-3
+      font-bold
+      ${
+        range === "7"
+          ? "bg-orange-500 text-white"
+          : "bg-white text-gray-700 shadow"
+      }
+    `}
+  >
+    📊 7 วัน
+  </button>
+
+
+  <button
+    onClick={() => setRange("30")}
+    className={`
+      rounded-xl
+      px-5
+      py-3
+      font-bold
+      ${
+        range === "30"
+          ? "bg-orange-500 text-white"
+          : "bg-white text-gray-700 shadow"
+      }
+    `}
+  >
+    📈 30 วัน
+  </button>
+
+</div>
 
 
 
@@ -240,12 +307,18 @@ md:grid-cols-5
 
 
 <Card
-title="💰 ยอดขายวันนี้"
-value={
-Number(summary.today_sales)
-.toLocaleString()
-}
-color="text-orange-500"
+  title={
+    range === "today"
+      ? "💰 ยอดขายวันนี้"
+      : range === "7"
+        ? "💰 ยอดขาย 7 วัน"
+        : "💰 ยอดขาย 30 วัน"
+  }
+  value={
+    Number(summary.today_sales)
+      .toLocaleString()
+  }
+  color="text-orange-500"
 />
 
 

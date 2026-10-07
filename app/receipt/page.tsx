@@ -89,7 +89,6 @@ maximumFractionDigits:2
 
 
 
-
 export default function ReceiptPage(){
 
 
@@ -105,7 +104,14 @@ const [selected,setSelected]=
 useState<Order|null>(null);
 
 
+  // =========================
+  // วันที่ที่เลือกดูใบเสร็จ
+  // =========================
 
+  const [selectedDate, setSelectedDate] =
+    useState(
+      new Date().toISOString().split("T")[0]
+    );
 
 
 const loadData=async()=>{
@@ -219,15 +225,19 @@ loadData();
 
 
 
-const paidOrders =
+  const paidOrders = orders.filter((order) => {
 
-orders.filter(
+    if (order.status !== "paid") {
+      return false;
+    }
 
-order=>
+    const orderDate = new Date(order.created_at)
+      .toISOString()
+      .split("T")[0];
 
-order.status==="paid"
+    return orderDate === selectedDate;
 
-);
+  });
 
 
 
@@ -251,6 +261,46 @@ max-w-4xl
 mx-auto
 "
 >
+
+<div className="mt-5 flex items-center gap-3">
+
+  <input
+    type="date"
+    value={selectedDate}
+    onChange={(e) => {
+      setSelectedDate(e.target.value);
+      setSelected(null);
+    }}
+    className="
+      rounded-xl
+      border
+      bg-white
+      px-4
+      py-3
+      font-bold
+    "
+  />
+
+  <button
+    onClick={() => {
+      setSelectedDate(
+        new Date().toISOString().split("T")[0]
+      );
+      setSelected(null);
+    }}
+    className="
+      rounded-xl
+      bg-orange-500
+      px-5
+      py-3
+      font-bold
+      text-white
+    "
+  >
+    📅 วันนี้
+  </button>
+
+</div>
 
 
 <h1
