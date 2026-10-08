@@ -26,7 +26,13 @@ type Order = {
 };
 
 export default function OrdersPage() {
+
   const [orders, setOrders] = useState<Order[]>([]);
+
+  const [orderFilter, setOrderFilter] =
+  useState<"today" | "all">("today");
+  
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [editingOrder, setEditingOrder] =
   useState<Order | null>(null);
@@ -383,6 +389,36 @@ export default function OrdersPage() {
 
   };
 
+  // ========================================
+  // เปลี่ยนเส้นก๋วยเตี๋ยว
+  // ========================================
+
+  const changeEditNoodle = (
+    index: number,
+    noodle: string
+  ) => {
+
+    setEditItems(prev => {
+
+      const copy = [...prev];
+
+      const item = copy[index];
+
+      if (!item) {
+        return prev;
+      }
+
+      copy[index] = {
+        ...item,
+        noodle
+      };
+
+      return copy;
+
+    });
+
+  };
+
 
   // ========================================
   // บันทึกการแก้ไข Order
@@ -545,6 +581,62 @@ export default function OrdersPage() {
     loadOrders();
   }, []);
 
+
+  // ========================================
+  // FILTER ออเดอร์
+  // ========================================
+
+  const getLocalDate = (dateString: string) => {
+
+    const date = new Date(dateString);
+
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  };
+
+
+  const [selectedDate, setSelectedDate] = useState(() => {
+
+    const now = new Date();
+
+    return [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+
+  });
+
+
+  const filteredOrders = orders.filter((order) => {
+
+    // =========================
+    // FILTER วันที่
+    // =========================
+
+    const dateMatch =
+      orderFilter === "all"
+        ? true
+        : getLocalDate(order.created_at) === selectedDate;
+
+
+    // =========================
+    // FILTER สถานะ
+    // =========================
+
+    const statusMatch =
+      statusFilter === "all"
+        ? true
+        : order.status === statusFilter;
+
+
+    return dateMatch && statusMatch;
+
+  });
+
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-6xl">
@@ -556,15 +648,183 @@ export default function OrdersPage() {
           <p className="mt-1 text-gray-500">
             คิวออเดอร์ทั้งหมด
           </p>
+
+          <div className="mt-5 flex gap-3">
+
+            <button
+              onClick={() => setOrderFilter("today")}
+              className={`
+                rounded-xl
+                px-5
+                py-3
+                font-bold
+                transition
+                ${
+                  orderFilter === "today"
+                    ? "bg-orange-500 text-white shadow"
+                    : "bg-white text-gray-700 shadow"
+                }
+              `}
+            >
+              📅 วันนี้
+            </button>
+
+            <button
+              onClick={() => setOrderFilter("all")}
+              className={`
+                rounded-xl
+                px-5
+                py-3
+                font-bold
+                transition
+                ${
+                  orderFilter === "all"
+                    ? "bg-orange-500 text-white shadow"
+                    : "bg-white text-gray-700 shadow"
+                }
+              `}
+            >
+              📋 ทั้งหมด
+            </button>
+
+          </div>
+        </div>
+
+
+
+        <div className="mt-5">
+
+          <div className="mb-2 text-sm font-bold text-gray-600">
+            สถานะออเดอร์
+          </div>
+
+          <div
+            className="
+              rounded-2xl
+              bg-white
+              p-2
+              shadow
+              border
+              border-gray-100
+            "
+          >
+
+            <div className="flex flex-wrap gap-2">
+
+              {/* ทั้งหมด */}
+              <button
+                onClick={() => setStatusFilter("all")}
+                className={`
+                  rounded-xl
+                  px-4
+                  py-2
+                  font-bold
+                  transition
+                  ${
+                    statusFilter === "all"
+                      ? "bg-orange-500 text-white shadow"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }
+                `}
+              >
+                📋 ทั้งหมด
+              </button>
+
+
+              {/* รอดำเนินการ */}
+              <button
+                onClick={() => setStatusFilter("pending")}
+                className={`
+                  rounded-xl
+                  px-4
+                  py-2
+                  font-bold
+                  transition
+                  ${
+                    statusFilter === "pending"
+                      ? "bg-orange-500 text-white shadow"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }
+                `}
+              >
+                🕐 รอดำเนินการ
+              </button>
+
+
+              {/* กำลังทำ */}
+              <button
+                onClick={() => setStatusFilter("preparing")}
+                className={`
+                  rounded-xl
+                  px-4
+                  py-2
+                  font-bold
+                  transition
+                  ${
+                    statusFilter === "preparing"
+                      ? "bg-orange-500 text-white shadow"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }
+                `}
+              >
+                👨‍🍳 กำลังทำ
+              </button>
+
+
+              {/* เสร็จแล้ว */}
+              <button
+                onClick={() => setStatusFilter("completed")}
+                className={`
+                  rounded-xl
+                  px-4
+                  py-2
+                  font-bold
+                  transition
+                  ${
+                    statusFilter === "completed"
+                      ? "bg-orange-500 text-white shadow"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }
+                `}
+              >
+                ✅ เสร็จแล้ว
+              </button>
+
+
+              {/* ชำระเงินแล้ว */}
+              <button
+                onClick={() => setStatusFilter("paid")}
+                className={`
+                  rounded-xl
+                  px-4
+                  py-2
+                  font-bold
+                  transition
+                  ${
+                    statusFilter === "paid"
+                      ? "bg-orange-500 text-white shadow"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }
+                `}
+              >
+                💰 ชำระเงินแล้ว
+              </button>
+
+            </div>
+
+          </div>
+
         </div>
 
         <div className="grid gap-4">
-          {orders.length === 0 ? (
+          {filteredOrders.length === 0 ? (
             <div className="rounded-xl bg-white p-8 text-center text-gray-400 shadow">
-              ยังไม่มีออเดอร์
+              {orderFilter === "today"
+                ? "วันนี้ยังไม่มีออเดอร์"
+                : "ยังไม่มีออเดอร์"}
             </div>
           ) : (
-            orders.map((order) => (
+            filteredOrders.map((order) => (
               <div
                 key={order.id}
                 className="rounded-xl bg-white p-5 shadow"
@@ -859,6 +1119,7 @@ export default function OrdersPage() {
                   flex
                   items-center
                   justify-between
+                  gap-3
                 "
               >
 
@@ -889,6 +1150,166 @@ export default function OrdersPage() {
                   </option>
 
                 </select>
+
+
+
+                {/* เลือกเส้น */}
+
+                {(() => {
+
+                  const menu = menuList.find(
+                    m => Number(m.id) === item.menuId
+                  );
+
+                  const isNoodle =
+                    menu?.category === "ก๋วยเตี๋ยว";
+
+                  if (!isNoodle) {
+                    return null;
+                  }
+
+                  return (
+
+                    <select
+                      value={item.noodle || ""}
+                      onChange={e =>
+                        changeEditNoodle(
+                          index,
+                          e.target.value
+                        )
+                      }
+                      className="
+                        rounded-lg
+                        border
+                        px-3
+                        py-2
+                      "
+                    >
+
+                      <option value="">
+                        เลือกเส้น
+                      </option>
+
+                      <option value="เส้นเล็ก">
+                        เส้นเล็ก
+                      </option>
+
+                      <option value="เส้นหมี่">
+                        เส้นหมี่
+                      </option>
+
+                      <option value="บะหมี่">
+                        บะหมี่
+                      </option>
+
+                      <option value="วุ้นเส้น">
+                        วุ้นเส้น
+                      </option>
+
+                    </select>
+
+                  );
+
+                })()}
+
+                <div className="mt-3 flex items-center justify-between">
+
+                {/* Dropdown ธรรมดา / พิเศษ */}
+                <select
+                  value={item.size}
+                  onChange={e =>
+                    changeEditSize(
+                      index,
+                      e.target.value as
+                        | "normal"
+                        | "special"
+                    )
+                  }
+                  className="
+                    rounded-lg
+                    border
+                    px-3
+                    py-2
+                  "
+                >
+                  <option value="normal">
+                    ธรรมดา
+                  </option>
+
+                  <option value="special">
+                    พิเศษ
+                  </option>
+                </select>
+
+
+                {/* 👇 เพิ่มส่วนนี้ */}
+                {(() => {
+                  const menu = menuList.find(
+                    m => Number(m.id) === item.menuId
+                  );
+
+                  if (menu?.category !== "ก๋วยเตี๋ยว") {
+                    return null;
+                  }
+
+                  return (
+                    <select
+                      value={item.noodle || ""}
+                      onChange={e =>
+                        changeEditNoodle(
+                          index,
+                          e.target.value
+                        )
+                      }
+                      className="
+                        rounded-lg
+                        border
+                        px-3
+                        py-2
+                      "
+                    >
+                      <option value="">
+                        เลือกเส้น
+                      </option>
+
+                      <option value="เส้นเล็ก">
+                        เส้นเล็ก
+                      </option>
+
+                      <option value="เส้นหมี่">
+                        เส้นหมี่
+                      </option>
+
+                      <option value="บะหมี่">
+                        บะหมี่
+                      </option>
+
+                      <option value="วุ้นเส้น">
+                        วุ้นเส้น
+                      </option>
+                    </select>
+                  );
+                })()}
+
+
+                {/* ปุ่มจำนวนเดิม ไม่ต้องแก้ */}
+                <div className="flex items-center gap-3">
+
+                  <button>
+                    −
+                  </button>
+
+                  <span>
+                    {item.quantity}
+                  </span>
+
+                  <button>
+                    +
+                  </button>
+
+                </div>
+
+              </div>
 
 
                 <div

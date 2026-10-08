@@ -231,14 +231,19 @@ loadData();
       return false;
     }
 
-    const orderDate = new Date(order.created_at)
-      .toISOString()
-      .split("T")[0];
+    const orderDate = new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone: "Asia/Bangkok",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }
+    ).format(new Date(order.created_at));
 
     return orderDate === selectedDate;
 
   });
-
 
 
 
@@ -283,10 +288,17 @@ mx-auto
 
   <button
     onClick={() => {
-      setSelectedDate(
-        new Date().toISOString().split("T")[0]
-      );
+
+      const now = new Date();
+
+      setSelectedDate([
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+      ].join("-"));
+
       setSelected(null);
+
     }}
     className="
       rounded-xl
