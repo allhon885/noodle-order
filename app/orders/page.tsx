@@ -30,7 +30,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
 
   const [orderFilter, setOrderFilter] =
-  useState<"today" | "all">("today");
+  useState<"today" | "all">("all");
   
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -575,9 +575,23 @@ export default function OrdersPage() {
     )
   );
 };
+
+
+
   useEffect(() => {
+
+    // โหลดทันทีเมื่อเปิดหน้า
     loadOrders();
     loadTables();
+
+    // โหลดข้อมูลใหม่ทุก 3 วินาที
+    const timer = setInterval(() => {
+      loadOrders();
+      loadTables();
+    }, 3000);
+
+    return () => clearInterval(timer);
+
   }, []);
 
 

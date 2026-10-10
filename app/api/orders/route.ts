@@ -596,18 +596,22 @@ const orderResult =
 await client.query(`
 
 INSERT INTO orders
-
 (
-order_number,
-table_number,
-status,
-total_amount
+  order_number,
+  table_number,
+  status,
+  total_amount,
+  created_at
 )
 
-
 VALUES
-
-($1,$2,'pending',$3)
+(
+  $1,
+  $2,
+  'pending',
+  $3,
+  CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok'
+)
 
 
 RETURNING *
