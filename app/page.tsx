@@ -835,27 +835,20 @@ return (
                     font-bold
 
                     ${
-                      selectedTable ===
-                      table.table_number
-
+                      selectedTable === table.table_number
                         ? "bg-orange-500 text-white"
-
-                        : table.status === "busy"
-
+                        : table.status === "occupied"
                           ? "bg-red-100 text-red-600"
-
                           : "bg-green-100 text-green-700"
                     }
                   `}
-                >
+                  >
+                    {table.status === "occupied"
+                      ? "🔴"
+                      : "🟢"}
 
-                  {table.status === "busy"
-                    ? "🔴"
-                    : "🟢"}
-
-                  {table.table_number}
-
-                </button>
+                    {table.table_number}
+                  </button>
 
               ))}
 

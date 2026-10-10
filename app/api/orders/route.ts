@@ -683,22 +683,12 @@ item.note || null
 
 
 await client.query(`
-
-UPDATE restaurant_tables
-
-SET status='busy'
-
-
-WHERE table_number=$1
-
-
-`,
-[
-tableNumber
-]
-
-);
-
+  UPDATE restaurant_tables
+  SET status='occupied'
+  WHERE table_number=$1
+`, [
+  tableNumber
+]);
 
 
 
@@ -825,6 +815,100 @@ export async function PATCH(
 
 
     const old = oldResult.rows[0];
+
+    const oldTableNumber = String(
+      old.table_number ?? ""
+    ).trim();
+
+    const newTableNumber = String(
+      body.table_number ?? old.table_number ?? ""
+    ).trim();
+
+    const tableChanged =
+      oldTableNumber !== newTableNumber;
+
+    console.log("MOVE TABLE", {
+      orderId: id,
+      oldTableNumber,
+      newTableNumber,
+      tableChanged
+    });
+
+    if (tableChanged) {
+
+      // =================================
+      // ตรวจสอบโต๊ะใหม่
+      // =================================
+
+      if (newTableNumber !== "กลับบ้าน") {
+
+        const tableResult = await client.query(
+          `
+          SELECT
+            table_number,
+            status
+          FROM restaurant_tables
+          WHERE table_number = $1
+          FOR UPDATE
+          `,
+          [newTableNumber]
+        );
+
+        if (tableResult.rows.length === 0) {
+
+          throw new Error(
+            `ไม่พบโต๊ะ ${newTableNumber}`
+          );
+
+        }
+
+        if (
+          tableResult.rows[0].status === "occupied"
+        ) {
+
+          throw new Error(
+            `โต๊ะ ${newTableNumber} กำลังถูกใช้งาน`
+          );
+
+        }
+
+      }
+
+      // =================================
+      // ปลดโต๊ะเก่า → ว่าง
+      // =================================
+
+      if (oldTableNumber !== "กลับบ้าน") {
+
+        await client.query(
+          `
+          UPDATE restaurant_tables
+          SET status = 'available'
+          WHERE table_number = $1
+          `,
+          [oldTableNumber]
+        );
+
+      }
+
+      // =================================
+      // จองโต๊ะใหม่ → ไม่ว่าง
+      // =================================
+
+      if (newTableNumber !== "กลับบ้าน") {
+
+        await client.query(
+          `
+          UPDATE restaurant_tables
+          SET status = 'occupied'
+          WHERE table_number = $1
+          `,
+          [newTableNumber]
+        );
+
+      }
+
+    }
 
 
     // =================================
@@ -1078,18 +1162,59 @@ export async function PATCH(
         UPDATE orders
 
         SET
-          total_amount = $1
+          total_amount = $1,
+          table_number = $2
 
-        WHERE id = $2
+        WHERE id = $3
 
         RETURNING *
         `,
         [
           total,
+          body.table_number || old.table_number,
           id
         ]
       );
 
+      // =================================
+      // อัปเดตสถานะโต๊ะเมื่อเปลี่ยนโต๊ะ
+      // =================================
+
+      const newTableNumber =
+        body.table_number || old.table_number;
+
+      const oldTableNumber =
+        old.table_number;
+
+
+      // ถ้าเปลี่ยนโต๊ะจริง
+      if (
+        String(oldTableNumber) !==
+        String(newTableNumber)
+      ) {
+
+        // โต๊ะเดิม → ว่าง
+        await client.query(
+          `
+          UPDATE restaurant_tables
+          SET status = 'available'
+          WHERE table_number = $1
+          `,
+          [oldTableNumber]
+        );
+
+
+        // โต๊ะใหม่ → ไม่ว่าง
+        await client.query(
+          `
+          UPDATE restaurant_tables
+          SET status = 'occupied'
+          WHERE table_number = $1
+          `,
+          [newTableNumber]
+        );
+
+      }
 
       await client.query("COMMIT");
 

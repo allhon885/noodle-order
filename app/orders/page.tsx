@@ -37,6 +37,10 @@ export default function OrdersPage() {
   const [editingOrder, setEditingOrder] =
   useState<Order | null>(null);
 
+  const [editTable, setEditTable] = useState("");
+
+  const [tables, setTables] = useState<any[]>([]);
+
   const [editItems, setEditItems] =
     useState<OrderItem[]>([]);
 
@@ -72,10 +76,27 @@ export default function OrdersPage() {
 
   };
 
+  const loadTables = async () => {
+  try {
+    const response = await fetch("/api/settings/tables", {
+      cache: "no-store",
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setTables(data);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   // ========================================
   // เปิดหน้าแก้ไข Order
   // ========================================
+
+
 
   const openEditOrder = async (order: Order) => {
 
@@ -100,6 +121,8 @@ export default function OrdersPage() {
       setMenuList(menus);
 
       setEditingOrder(order);
+
+      setEditTable(order.table_number);
 
       const mergedItems: OrderItem[] = [];
 
@@ -468,6 +491,8 @@ export default function OrdersPage() {
 
                 id:
                   editingOrder.id,
+                
+                table_number: editTable,
 
                 items:
                   editItems.map(
@@ -528,6 +553,8 @@ export default function OrdersPage() {
 
       await loadOrders();
 
+      window.location.reload();
+
 
     } catch (error) {
 
@@ -579,6 +606,7 @@ export default function OrdersPage() {
 };
   useEffect(() => {
     loadOrders();
+    loadTables();
   }, []);
 
 
@@ -990,42 +1018,44 @@ export default function OrdersPage() {
           )}
         </div>
       </div>
+
+
       {editingOrder && (
-
-  <div
-    className="
-      fixed
-      inset-0
-      z-50
-      flex
-      items-center
-      justify-center
-      bg-black/50
-      p-4
-    "
-  >
-
-    <div
-      className="
-        w-full
-        max-w-lg
-        max-h-[90vh]
-        overflow-y-auto
-        rounded-2xl
-        bg-white
-        p-6
-        shadow-2xl
-      "
-    >
 
       <div
         className="
+          fixed
+          inset-0
+          z-50
           flex
           items-center
-          justify-between
-          mb-5
+          justify-center
+          bg-black/50
+          p-4
         "
       >
+
+        <div
+          className="
+            w-full
+            max-w-lg
+            max-h-[90vh]
+            overflow-y-auto
+            rounded-2xl
+            bg-white
+            p-6
+            shadow-2xl
+          "
+        >
+
+          <div
+            className="
+              flex
+              items-center
+              justify-between
+              mb-5
+            "
+          >
 
         <div>
 
@@ -1036,7 +1066,7 @@ export default function OrdersPage() {
           <p className="mt-1 text-gray-500">
             {editingOrder.order_number}
             {" • "}
-            โต๊ะ {editingOrder.table_number}
+            โต๊ะ {editTable || editingOrder.table_number}
           </p>
 
         </div>
@@ -1057,45 +1087,106 @@ export default function OrdersPage() {
 
       </div>
 
+      {/* เลือกโต๊ะ */}
+
+        <div className="mb-5">
+
+          <label className="mb-2 block text-sm font-bold text-gray-700">
+            🪑 โต๊ะ
+          </label>
+
+          <select
+            value={editTable}
+            onChange={(e) => setEditTable(e.target.value)}
+            className="
+              w-full
+              rounded-xl
+              border
+              bg-white
+              px-4
+              py-3
+              text-base
+              font-bold
+              outline-none
+              focus:border-orange-500
+            "
+          >
+            {tables
+              .filter(
+                (table) => table.table_number !== "กลับบ้าน"
+              )
+              .map((table) => (
+                <option
+                  key={table.id}
+                  value={String(table.table_number)}
+                  disabled={
+                    table.status === "occupied" &&
+                    String(table.table_number) !==
+                      String(editingOrder?.table_number)
+                  }
+                >
+                  โต๊ะ {table.table_number}
+                  {table.status === "occupied"
+                    ? " • ไม่ว่าง"
+                    : " • ว่าง"}
+                </option>
+              ))}
+          </select>
+
+        </div>
+
+
 
       {/* รายการปัจจุบัน */}
 
-      <div className="space-y-3">
+      <div className="space-y-4">
 
-        {editItems.map(
-          (item, index) => (
+        {editItems.map((item, index) => {
+
+          const menu = menuList.find(
+            m => Number(m.id) === Number(item.menuId)
+          );
+
+          const isNoodle =
+            menu?.category === "ก๋วยเตี๋ยว";
+
+          return (
 
             <div
               key={index}
               className="
-                rounded-xl
+                rounded-2xl
                 bg-gray-50
                 p-4
+                shadow-sm
               "
             >
+
+              {/* ชื่อเมนู + ลบ */}
 
               <div
                 className="
                   flex
-                  items-center
+                  items-start
                   justify-between
+                  gap-3
                 "
               >
 
-                <div>
+                <div className="min-w-0">
 
-                  <div className="font-bold">
+                  <div className="text-lg font-bold">
                     {item.menuName}
                   </div>
 
-                  <div className="text-sm text-gray-500">
-                    {item.unitPrice} บาท
+                  <div className="mt-1 text-sm text-gray-500">
+                    {item.unitPrice.toLocaleString()} บาท
                   </div>
 
                 </div>
 
-
                 <button
+                  type="button"
                   onClick={() =>
                     changeEditQuantity(
                       index,
@@ -1103,8 +1194,10 @@ export default function OrdersPage() {
                     )
                   }
                   className="
-                    text-red-500
+                    shrink-0
+                    text-sm
                     font-bold
+                    text-red-500
                   "
                 >
                   ลบ
@@ -1113,18 +1206,22 @@ export default function OrdersPage() {
               </div>
 
 
+              {/* ตัวเลือก */}
+
               <div
                 className="
-                  mt-3
-                  flex
-                  items-center
-                  justify-between
+                  mt-4
+                  grid
+                  grid-cols-1
                   gap-3
+                  sm:grid-cols-2
                 "
               >
 
+                {/* ธรรมดา / พิเศษ */}
+
                 <select
-                  value={item.size}
+                  value={item.size || "normal"}
                   onChange={e =>
                     changeEditSize(
                       index,
@@ -1134,10 +1231,14 @@ export default function OrdersPage() {
                     )
                   }
                   className="
-                    rounded-lg
+                    w-full
+                    rounded-xl
                     border
+                    bg-white
                     px-3
-                    py-2
+                    py-3
+                    text-sm
+                    outline-none
                   "
                 >
 
@@ -1152,165 +1253,72 @@ export default function OrdersPage() {
                 </select>
 
 
+                {/* เลือกเส้นเฉพาะก๋วยเตี๋ยว */}
 
-                {/* เลือกเส้น */}
+                {isNoodle ? (
 
-                {(() => {
+                  <select
+                    value={item.noodle || ""}
+                    onChange={e =>
+                      changeEditNoodle(
+                        index,
+                        e.target.value
+                      )
+                    }
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      bg-white
+                      px-3
+                      py-3
+                      text-sm
+                      outline-none
+                    "
+                  >
 
-                  const menu = menuList.find(
-                    m => Number(m.id) === item.menuId
-                  );
+                    <option value="">
+                      เลือกเส้น
+                    </option>
 
-                  const isNoodle =
-                    menu?.category === "ก๋วยเตี๋ยว";
+                    <option value="เส้นเล็ก">
+                      เส้นเล็ก
+                    </option>
 
-                  if (!isNoodle) {
-                    return null;
-                  }
+                    <option value="เส้นหมี่">
+                      เส้นหมี่
+                    </option>
 
-                  return (
+                    <option value="บะหมี่">
+                      บะหมี่
+                    </option>
 
-                    <select
-                      value={item.noodle || ""}
-                      onChange={e =>
-                        changeEditNoodle(
-                          index,
-                          e.target.value
-                        )
-                      }
-                      className="
-                        rounded-lg
-                        border
-                        px-3
-                        py-2
-                      "
-                    >
+                    <option value="วุ้นเส้น">
+                      วุ้นเส้น
+                    </option>
 
-                      <option value="">
-                        เลือกเส้น
-                      </option>
+                  </select>
 
-                      <option value="เส้นเล็ก">
-                        เส้นเล็ก
-                      </option>
+                ) : (
 
-                      <option value="เส้นหมี่">
-                        เส้นหมี่
-                      </option>
+                  <div className="hidden sm:block" />
 
-                      <option value="บะหมี่">
-                        บะหมี่
-                      </option>
-
-                      <option value="วุ้นเส้น">
-                        วุ้นเส้น
-                      </option>
-
-                    </select>
-
-                  );
-
-                })()}
-
-                <div className="mt-3 flex items-center justify-between">
-
-                {/* Dropdown ธรรมดา / พิเศษ */}
-                <select
-                  value={item.size}
-                  onChange={e =>
-                    changeEditSize(
-                      index,
-                      e.target.value as
-                        | "normal"
-                        | "special"
-                    )
-                  }
-                  className="
-                    rounded-lg
-                    border
-                    px-3
-                    py-2
-                  "
-                >
-                  <option value="normal">
-                    ธรรมดา
-                  </option>
-
-                  <option value="special">
-                    พิเศษ
-                  </option>
-                </select>
-
-
-                {/* 👇 เพิ่มส่วนนี้ */}
-                {(() => {
-                  const menu = menuList.find(
-                    m => Number(m.id) === item.menuId
-                  );
-
-                  if (menu?.category !== "ก๋วยเตี๋ยว") {
-                    return null;
-                  }
-
-                  return (
-                    <select
-                      value={item.noodle || ""}
-                      onChange={e =>
-                        changeEditNoodle(
-                          index,
-                          e.target.value
-                        )
-                      }
-                      className="
-                        rounded-lg
-                        border
-                        px-3
-                        py-2
-                      "
-                    >
-                      <option value="">
-                        เลือกเส้น
-                      </option>
-
-                      <option value="เส้นเล็ก">
-                        เส้นเล็ก
-                      </option>
-
-                      <option value="เส้นหมี่">
-                        เส้นหมี่
-                      </option>
-
-                      <option value="บะหมี่">
-                        บะหมี่
-                      </option>
-
-                      <option value="วุ้นเส้น">
-                        วุ้นเส้น
-                      </option>
-                    </select>
-                  );
-                })()}
-
-
-                {/* ปุ่มจำนวนเดิม ไม่ต้องแก้ */}
-                <div className="flex items-center gap-3">
-
-                  <button>
-                    −
-                  </button>
-
-                  <span>
-                    {item.quantity}
-                  </span>
-
-                  <button>
-                    +
-                  </button>
-
-                </div>
+                )}
 
               </div>
 
+
+              {/* จำนวน + ราคา */}
+
+              <div
+                className="
+                  mt-4
+                  flex
+                  items-center
+                  justify-between
+                  gap-4
+                "
+              >
 
                 <div
                   className="
@@ -1321,30 +1329,41 @@ export default function OrdersPage() {
                 >
 
                   <button
+                    type="button"
                     onClick={() =>
                       changeEditQuantity(
                         index,
                         -1
                       )
                     }
+                    disabled={item.quantity <= 1}
                     className="
-                      h-9
-                      w-9
+                      h-10
+                      w-10
                       rounded-full
                       bg-gray-200
+                      text-lg
                       font-bold
+                      disabled:opacity-40
                     "
                   >
                     −
                   </button>
 
 
-                  <span className="font-bold">
+                  <span
+                    className="
+                      min-w-[24px]
+                      text-center
+                      font-bold
+                    "
+                  >
                     {item.quantity}
                   </span>
 
 
                   <button
+                    type="button"
                     onClick={() =>
                       changeEditQuantity(
                         index,
@@ -1352,12 +1371,13 @@ export default function OrdersPage() {
                       )
                     }
                     className="
-                      h-9
-                      w-9
+                      h-10
+                      w-10
                       rounded-full
                       bg-green-500
-                      text-white
+                      text-lg
                       font-bold
+                      text-white
                     "
                   >
                     +
@@ -1365,83 +1385,25 @@ export default function OrdersPage() {
 
                 </div>
 
-              </div>
 
+                <div
+                  className="
+                    text-right
+                    text-lg
+                    font-bold
+                  "
+                >
+                  {item.subtotal.toLocaleString()}
+                  {" บาท"}
+                </div>
 
-              <div
-                className="
-                  mt-3
-                  text-right
-                  font-bold
-                "
-              >
-                {item.subtotal.toLocaleString()}
-                {" บาท"}
               </div>
 
             </div>
 
-          )
-        )}
+          );
 
-      </div>
-
-
-      {/* เพิ่มเมนู */}
-
-      <div className="mt-6">
-
-        <h3 className="mb-2 font-bold">
-          ➕ เพิ่มรายการ
-        </h3>
-
-
-        <select
-          value=""
-          onChange={e => {
-
-            const menu =
-              menuList.find(
-                m =>
-                  String(m.id) ===
-                  e.target.value
-              );
-
-            if (menu) {
-
-              addEditItem(menu);
-
-            }
-
-          }}
-          className="
-            w-full
-            rounded-xl
-            border
-            p-3
-          "
-        >
-
-          <option value="">
-            เลือกเมนูที่ต้องการเพิ่ม
-          </option>
-
-
-          {menuList.map(menu => (
-
-            <option
-              key={menu.id}
-              value={menu.id}
-            >
-              {menu.name}
-              {" - "}
-              {menu.price_normal}
-              {" บาท"}
-            </option>
-
-          ))}
-
-        </select>
+        })}
 
       </div>
 

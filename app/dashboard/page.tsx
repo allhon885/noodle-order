@@ -151,18 +151,23 @@ export default function DashboardPage(){
     return (
 
       <main
-      className="
-      min-h-screen
-      bg-gray-100
-      p-6
-      "
+        className="
+          min-h-screen
+          w-full
+          overflow-x-hidden
+          bg-gray-100
+          p-4
+          sm:p-6
+        "
       >
 
         <div
-        className="
-        text-center
-        text-xl
-        "
+          className="
+            mx-auto
+            w-full
+            max-w-6xl
+            min-w-0
+          "
         >
 
         กำลังโหลด Dashboard...
@@ -184,21 +189,25 @@ export default function DashboardPage(){
 return (
 
 <main
-className="
-min-h-screen
-bg-gray-100
-p-6
-"
+  className="
+    min-h-screen
+    w-full
+    overflow-x-hidden
+    bg-gray-100
+    p-4
+    sm:p-6
+  "
 >
 
 
 <div
-className="
-mx-auto
-max-w-6xl
-"
+  className="
+    mx-auto
+    w-full
+    max-w-6xl
+    min-w-0
+  "
 >
-
 
 
 <h1
@@ -296,12 +305,15 @@ font-bold
 
 
 <div
-className="
-mt-6
-grid
-gap-5
-md:grid-cols-5
-"
+  className="
+    mt-6
+    grid
+    min-w-0
+    grid-cols-1
+    sm:grid-cols-2
+    lg:grid-cols-5
+    gap-4
+  "
 >
 
 
@@ -370,293 +382,316 @@ color="text-blue-600"
 
 
 
+        {/* TOP MENU */}
+
+        <div
+          className="
+            mt-6
+            min-w-0
+            w-full
+            overflow-hidden
+            rounded-2xl
+            bg-white
+            p-5
+            shadow
+            sm:p-6
+          "
+        >
+
+          <h2
+            className="
+              text-xl
+              font-bold
+              sm:text-2xl
+            "
+          >
+            🏆 เมนูขายดี
+          </h2>
 
 
+          <div
+            className="
+              mt-5
+              min-w-0
+              space-y-3
+            "
+          >
 
-{/* TOP MENU */}
+            {topMenu.length === 0 ? (
 
+              <div
+                className="
+                  rounded-xl
+                  bg-gray-50
+                  p-4
+                  text-gray-400
+                "
+              >
+                ยังไม่มีข้อมูล
+              </div>
 
-<div
-className="
-mt-6
-rounded-2xl
-bg-white
-p-6
-shadow
-"
->
+            ) : (
 
+              topMenu.map(
+                (menu, index) => (
 
-<h2
-className="
-text-2xl
-font-bold
-"
->
-🏆 เมนูขายดี
-</h2>
+                  <div
+                    key={menu.name}
+                    className="
+                      flex
+                      min-w-0
+                      w-full
+                      items-center
+                      justify-between
+                      gap-4
+                      overflow-hidden
+                      rounded-xl
+                      bg-gray-50
+                      p-4
+                    "
+                  >
 
+                    {/* ชื่อเมนู */}
 
-
-<div
-className="
-mt-5
-space-y-3
-"
->
-
-
-{
-topMenu.length===0
-
-?
-
-<div
-className="
-text-gray-400
-"
->
-ยังไม่มีข้อมูล
-</div>
-
-
-:
-
-
-topMenu.map(
-(menu,index)=>(
-
-
-<div
-key={menu.name}
-className="
-flex
-justify-between
-rounded-xl
-bg-gray-50
-p-4
-"
->
+                    <div
+                      className="
+                        min-w-0
+                        flex-1
+                        break-words
+                        whitespace-normal
+                        text-sm
+                        font-bold
+                        sm:text-base
+                      "
+                    >
+                      {index + 1}.{" "}
+                      {menu.name}
+                    </div>
 
 
-<div
-className="
-font-bold
-"
->
+                    {/* จำนวน + ยอด */}
 
-{index+1}. {menu.name}
+                    <div
+                      className="
+                        shrink-0
+                        min-w-[100px]
+                        text-right
+                      "
+                    >
 
-</div>
-
-
-
-<div
-className="
-text-right
-"
->
-
-<div
-  className="
-  font-bold
-"
->
-  {menu.total_quantity} {getUnit(menu.name)}
-</div>
-
-
-<div
-className="
-text-sm
-text-gray-500
-"
->
-ยอด {Number(menu.total_sales).toLocaleString()} บาท
-</div>
+                      <div
+                        className="
+                          whitespace-nowrap
+                          text-sm
+                          font-bold
+                          sm:text-base
+                        "
+                      >
+                        {
+                          menu.total_quantity
+                        }{" "}
+                        {
+                          getUnit(
+                            menu.name
+                          )
+                        }
+                      </div>
 
 
-</div>
+                      <div
+                        className="
+                          mt-1
+                          whitespace-nowrap
+                          text-xs
+                          text-gray-500
+                          sm:text-sm
+                        "
+                      >
+                        ยอด{" "}
+                        {
+                          Number(
+                            menu.total_sales
+                          ).toLocaleString()
+                        }{" "}
+                        บาท
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                )
+              )
+
+            )}
+
+          </div>
+
+        </div>
 
 
+        {/* CHART */}
 
-</div>
+        <div
+          className="
+            mt-6
+            min-w-0
+            w-full
+            overflow-hidden
+            rounded-2xl
+            bg-white
+            p-5
+            shadow
+            sm:p-6
+          "
+        >
+
+          <h2
+            className="
+              text-xl
+              font-bold
+              sm:text-2xl
+            "
+          >
+            📈 ยอดขายย้อนหลัง
+          </h2>
 
 
-)
+          <div
+            className="
+              mt-5
+              h-72
+              min-w-0
+              w-full
+              sm:h-80
+            "
+          >
 
-)
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+
+              <LineChart
+                data={salesChart}
+              >
+
+                <CartesianGrid />
+
+                <XAxis
+                  dataKey="date"
+                />
+
+                <YAxis />
+
+                <Tooltip />
+
+                <Line
+                  type="monotone"
+                  dataKey="sales"
+                  strokeWidth={2}
+                />
+
+              </LineChart>
+
+            </ResponsiveContainer>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  );
 
 }
 
 
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-{/* CHART */}
-
-
-<div
-className="
-mt-6
-rounded-2xl
-bg-white
-p-6
-shadow
-"
->
-
-
-<h2
-className="
-text-2xl
-font-bold
-"
->
-
-📈 ยอดขายย้อนหลัง
-
-</h2>
-
-
-
-<div
-className="
-mt-5
-h-80
-"
->
-
-
-<ResponsiveContainer
-width="100%"
-height="100%"
->
-
-
-<LineChart
-data={salesChart}
->
-
-
-<CartesianGrid />
-
-
-<XAxis
-dataKey="date"
-/>
-
-
-<YAxis />
-
-
-<Tooltip />
-
-
-<Line
-type="monotone"
-dataKey="sales"
-/>
-
-
-</LineChart>
-
-
-</ResponsiveContainer>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-</main>
-
-
-);
-
-
-}
-
-
-
-
+/* ========================================
+   CARD
+======================================== */
 
 function Card({
-title,
-value,
-unit = "บาท",
-color
-}:{
-title:string;
-value:string;
-unit?:string;
-color:string;
-}){
+  title,
+  value,
+  unit = "บาท",
+  color
+}: {
+  title: string;
+  value: string;
+  unit?: string;
+  color: string;
+}) {
+
+  return (
+
+    <div
+      className="
+        min-w-0
+        w-full
+        overflow-hidden
+        rounded-2xl
+        bg-white
+        p-5
+        shadow
+      "
+    >
+
+      {/* ชื่อ */}
+
+      <div
+        className="
+          min-w-0
+          break-words
+          text-sm
+          text-gray-500
+          sm:text-base
+        "
+      >
+        {title}
+      </div>
 
 
-return (
+      {/* จำนวนเงิน */}
 
-<div
-className="
-rounded-2xl
-bg-white
-p-6
-shadow
-"
->
+      <div
+        className={`
+          mt-2
+          min-w-0
+          break-words
+          ${color}
+        `}
+      >
 
+        <span
+          className="
+            break-all
+            text-2xl
+            font-bold
+            sm:text-3xl
+          "
+        >
+          {value}
+        </span>
 
-<div
-className="
-text-gray-500
-"
->
-{title}
-</div>
+        <span
+          className="
+            ml-1
+            whitespace-nowrap
+            text-sm
+            font-bold
+            sm:text-base
+          "
+        >
+          {unit}
+        </span>
 
+      </div>
 
+    </div>
 
-<div
-className={`
-mt-2
-text-3xl
-font-bold
-${color}
-`}
->
-
-{value}
-
-{unit}
-
-</div>
-
-
-</div>
-
-
-);
-
+  );
 
 }
