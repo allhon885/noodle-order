@@ -154,6 +154,37 @@ const loadTables = async () => {
 };
 
 
+// ========================================
+// โหลดโต๊ะใหม่
+// ========================================
+
+const refreshTables = async () => {
+  try {
+    const res = await fetch(
+      "/api/settings/tables",
+      {
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("โหลดโต๊ะไม่สำเร็จ");
+    }
+
+    const data = await res.json();
+
+    setTables(data);
+
+  } catch (error) {
+
+    console.error(
+      "REFRESH TABLE ERROR",
+      error
+    );
+
+  }
+};
+
 
 // โหลดเมนูและโต๊ะ
 

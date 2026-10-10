@@ -50,6 +50,9 @@ export default function OrdersPage() {
   const [savingEdit, setSavingEdit] =
     useState(false);
 
+  const [showEditMenu, setShowEditMenu] =
+  useState(false);
+
   const loadOrders = async () => {
 
     try {
@@ -176,98 +179,66 @@ export default function OrdersPage() {
   };
 
 
+
+
   // ========================================
   // เพิ่มรายการใน Order ที่กำลังแก้ไข
   // ========================================
 
   const addEditItem = (menu: any) => {
 
-    setEditItems(prev => {
+    const price = Number(menu.price_normal);
 
-      const existingIndex =
-        prev.findIndex(
-          item =>
-            item.menuId === Number(menu.id) &&
-            item.size === "normal"
-        );
+    if (!price) {
 
+      alert(
+        `ไม่พบราคาของเมนู ${menu.name}`
+      );
 
-      // ถ้ามีรายการเดิมอยู่แล้ว
-      // ให้เพิ่มจำนวนแทนการสร้างรายการซ้ำ
+      return;
 
-      if (existingIndex !== -1) {
-
-        const copy = [...prev];
-
-        const item =
-          copy[existingIndex];
-
-        const quantity =
-          item.quantity + 1;
+    }
 
 
-        copy[existingIndex] = {
+    const newItem: OrderItem = {
 
-          ...item,
+      menuId:
+        Number(menu.id),
 
-          quantity,
+      menuName:
+        menu.name,
 
-          subtotal:
-            item.unitPrice * quantity
+      quantity:
+        1,
 
-        };
+      size:
+        "normal",
 
+      unitPrice:
+        price,
 
-        return copy;
+      subtotal:
+        price,
 
-      }
+      noodle:
+        null,
 
+      vegetable:
+        null,
 
-      // ถ้ายังไม่มีรายการ
-      // ให้สร้างรายการใหม่
+      note:
+        null
 
-      const price =
-        Number(menu.price_normal);
-
-
-      const newItem: OrderItem = {
-
-        menuId:
-          Number(menu.id),
-
-        menuName:
-          menu.name,
-
-        quantity:
-          1,
-
-        size:
-          "normal",
-
-        unitPrice:
-          price,
-
-        subtotal:
-          price,
-
-        noodle:
-          null,
-
-        vegetable:
-          null,
-
-        note:
-          null
-
-      };
+    };
 
 
-      return [
-        ...prev,
-        newItem
-      ];
+    setEditItems(prev => [
 
-    });
+      ...prev,
+
+      newItem
+
+    ]);
 
   };
 
@@ -1076,6 +1047,7 @@ export default function OrdersPage() {
           onClick={() => {
             setEditingOrder(null);
             setEditItems([]);
+            setShowEditMenu(false);
           }}
           className="
             text-2xl
@@ -1407,6 +1379,83 @@ export default function OrdersPage() {
 
       </div>
 
+      {/* เพิ่มเมนู */}
+      <div className="mt-5">
+
+        <button
+          type="button"
+          onClick={() => setShowEditMenu(!showEditMenu)}
+          className="
+            w-full
+            rounded-xl
+            bg-orange-500
+            py-3
+            font-bold
+            text-white
+            shadow
+            hover:bg-orange-600
+          "
+        >
+          {showEditMenu ? "✕ ปิดรายการเมนู" : "➕ เพิ่มเมนู"}
+        </button>
+
+        {showEditMenu && (
+
+          <div
+            className="
+              mt-3
+              max-h-80
+              overflow-y-auto
+              rounded-2xl
+              border
+              bg-white
+              p-3
+              shadow
+            "
+          >
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+
+              {menuList.map((menu) => (
+
+                <button
+                  key={menu.id}
+                  type="button"
+                  onClick={() => {
+                    addEditItem(menu);
+                    setShowEditMenu(false);
+                  }}
+                  className="
+                    rounded-xl
+                    bg-gray-50
+                    p-3
+                    text-left
+                    shadow-sm
+                    transition
+                    hover:bg-orange-50
+                  "
+                >
+
+                  <div className="font-bold">
+                    {menu.name}
+                  </div>
+
+                  <div className="mt-1 text-sm text-gray-500">
+                    {Number(menu.price_normal).toLocaleString()} บาท
+                  </div>
+
+                </button>
+
+              ))}
+
+            </div>
+
+          </div>
+
+        )}
+
+      </div>
+
 
       {/* ยอดรวม */}
 
@@ -1462,6 +1511,7 @@ export default function OrdersPage() {
           onClick={() => {
             setEditingOrder(null);
             setEditItems([]);
+            setShowEditMenu(false);
           }}
           className="
             rounded-xl

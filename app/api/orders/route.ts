@@ -497,61 +497,92 @@ if (oldOrder.rows.length) {
 
 
 
-
-
-
-
-
-
-
 // =================================
-// สร้าง order ใหม่
+// สร้าง Order Number แบบรายเดือน
+// รูปแบบ: ORD-YYYYMM-0001
 // =================================
 
-
-const last =
-
-await client.query(`
-
-SELECT order_number
-
-FROM orders
-
-ORDER BY id DESC
-
-LIMIT 1
-
+// เดือนปัจจุบันตามเวลาไทย
+const monthResult = await client.query(`
+  SELECT
+    to_char(
+      CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok',
+      'YYYYMM'
+    ) AS month_key
 `);
 
+const monthKey = monthResult.rows[0].month_key;
 
+
+// =================================
+// ป้องกันเลขซ้ำกรณีเปิดหลายเครื่องพร้อมกัน
+// =================================
+
+await client.query(
+  `
+  SELECT pg_advisory_xact_lock(
+    hashtext($1)
+  )
+  `,
+  [
+    `order_number_${monthKey}`
+  ]
+);
+
+
+// =================================
+// หาเลขล่าสุดของเดือนนี้
+// =================================
+
+const lastResult = await client.query(
+  `
+  SELECT order_number
+  FROM orders
+  WHERE order_number LIKE $1
+  ORDER BY id DESC
+  LIMIT 1
+  `,
+  [
+    `ORD-${monthKey}-%`
+  ]
+);
 
 
 let number = 1;
 
 
-if(last.rows.length){
+if (lastResult.rows.length > 0) {
 
+  const lastOrderNumber =
+    String(
+      lastResult.rows[0].order_number
+    );
 
-number =
+  const match =
+    lastOrderNumber.match(
+      /-(\d+)$/
+    );
 
-parseInt(
+  if (match) {
 
-last.rows[0].order_number.replace("ORD-","")
+    number =
+      Number(match[1]) + 1;
 
-)
-
-+1;
-
+  }
 
 }
 
 
+// =================================
+// สร้างเลข Order
+// =================================
 
 const orderNumber =
+  `ORD-${monthKey}-${String(number).padStart(4, "0")}`;
 
-"ORD-" +
 
-String(number).padStart(4,"0");
+
+
 
 
 
@@ -1176,45 +1207,8 @@ export async function PATCH(
         ]
       );
 
-      // =================================
-      // อัปเดตสถานะโต๊ะเมื่อเปลี่ยนโต๊ะ
-      // =================================
+      
 
-      const newTableNumber =
-        body.table_number || old.table_number;
-
-      const oldTableNumber =
-        old.table_number;
-
-
-      // ถ้าเปลี่ยนโต๊ะจริง
-      if (
-        String(oldTableNumber) !==
-        String(newTableNumber)
-      ) {
-
-        // โต๊ะเดิม → ว่าง
-        await client.query(
-          `
-          UPDATE restaurant_tables
-          SET status = 'available'
-          WHERE table_number = $1
-          `,
-          [oldTableNumber]
-        );
-
-
-        // โต๊ะใหม่ → ไม่ว่าง
-        await client.query(
-          `
-          UPDATE restaurant_tables
-          SET status = 'occupied'
-          WHERE table_number = $1
-          `,
-          [newTableNumber]
-        );
-
-      }
 
       await client.query("COMMIT");
 
