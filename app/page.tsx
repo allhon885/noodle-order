@@ -113,7 +113,45 @@ const [loading,setLoading] =
 useState(false);
 
 
+// ========================================
+// โหลดสถานะโต๊ะใหม่
+// ========================================
 
+const loadTables = async () => {
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/settings/tables",
+        {
+          cache: "no-store",
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      console.error(
+        "โหลดโต๊ะไม่สำเร็จ",
+        data
+      );
+      return;
+    }
+
+    setTables(data);
+
+  } catch (error) {
+
+    console.error(
+      "LOAD TABLE ERROR",
+      error
+    );
+
+  }
+
+};
 
 
 
@@ -151,18 +189,6 @@ setCategories(cats);
 
 
 
-const tableRes =
-await fetch("/api/settings/tables");
-
-
-const tableData =
-await tableRes.json();
-
-
-setTables(tableData);
-
-
-
 }catch(error){
 
 console.error(error);
@@ -174,6 +200,7 @@ console.error(error);
 
 
 loadData();
+loadTables();
 
 
 },[]);
@@ -705,6 +732,8 @@ const submitOrder = async () => {
         : "✅ ส่งออเดอร์เข้าครัวแล้ว"
     );
 
+    // โหลดสถานะโต๊ะใหม่ทันที
+    await loadTables();
 
     setCart([]);
 
