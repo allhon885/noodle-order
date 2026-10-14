@@ -84,7 +84,7 @@ useState<number | null>(null);
 const [selectedCategory,setSelectedCategory] =
 useState("ก๋วยเตี๋ยว");
 
-
+const [meatFilter, setMeatFilter] = useState("all");
 
 const [cart,setCart] =
 useState<CartItem[]>([]);
@@ -361,7 +361,31 @@ useEffect(() => {
 // กรองเมนู
 
 const currentMenus = menus.filter(item => {
-  return item.category === selectedCategory;
+
+  if (item.category !== selectedCategory) {
+    return false;
+  }
+
+  if (meatFilter === "pork") {
+    return (
+      item.name.includes("หมู")
+    );
+  }
+
+  if (meatFilter === "beef") {
+    return (
+      item.name.includes("เนื้อ")
+    );
+  }
+
+  if (meatFilter === "other") {
+    return (
+      !item.name.includes("หมู") &&
+      !item.name.includes("เนื้อ")
+    );
+  }
+
+  return true;
 });
 
 
@@ -1338,15 +1362,85 @@ return (
             "
           >
 
-            <h2
-              className="
-              text-xl
-              font-bold
-              mb-4
-              "
-            >
-              🍜 รายการอาหาร
-            </h2>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+
+              <h2 className="text-xl font-bold">
+                🍜 รายการอาหาร
+              </h2>
+
+              <div className="flex flex-wrap gap-2">
+
+                <button
+                  onClick={() => setMeatFilter("all")}
+                  className={`
+                    rounded-xl
+                    px-4
+                    py-2
+                    font-bold
+                    ${
+                      meatFilter === "all"
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }
+                  `}
+                >
+                  🍜 ทั้งหมด
+                </button>
+
+                <button
+                  onClick={() => setMeatFilter("pork")}
+                  className={`
+                    rounded-xl
+                    px-4
+                    py-2
+                    font-bold
+                    ${
+                      meatFilter === "pork"
+                        ? "bg-pink-500 text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }
+                  `}
+                >
+                  🐷 หมู
+                </button>
+
+                <button
+                  onClick={() => setMeatFilter("beef")}
+                  className={`
+                    rounded-xl
+                    px-4
+                    py-2
+                    font-bold
+                    ${
+                      meatFilter === "beef"
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }
+                  `}
+                >
+                  🥩 เนื้อ
+                </button>
+
+                <button
+                  onClick={() => setMeatFilter("other")}
+                  className={`
+                    rounded-xl
+                    px-4
+                    py-2
+                    font-bold
+                    ${
+                      meatFilter === "other"
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }
+                  `}
+                >
+                  🍱 อื่นๆ
+                </button>
+
+              </div>
+
+            </div>
 
 
             <div
@@ -1357,6 +1451,8 @@ return (
               gap-3
               "
             >
+
+
 
               {currentMenus.map((item) => {
 
