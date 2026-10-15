@@ -53,6 +53,11 @@ export default function OrdersPage() {
   const [showEditMenu, setShowEditMenu] =
   useState(false);
 
+  const [editMenuSearch, setEditMenuSearch] = useState("");
+
+  const [editMenuFilter, setEditMenuFilter] =
+    useState<"all" | "pork" | "beef" | "other">("all");
+
   const loadOrders = async () => {
 
     try {
@@ -127,6 +132,10 @@ export default function OrdersPage() {
 
       setEditTable(order.table_number);
 
+      setEditMenuSearch("");
+
+      setEditMenuFilter("all");
+
       const mergedItems: OrderItem[] = [];
 
       for (const item of order.items) {
@@ -177,6 +186,8 @@ export default function OrdersPage() {
     }
 
   };
+
+  
 
 
 
@@ -649,6 +660,43 @@ export default function OrdersPage() {
     return dateMatch && statusMatch;
 
   });
+  
+  
+    const filteredEditMenus = menuList.filter((menu) => {
+
+    const searchMatch =
+      menu.name
+        .toLowerCase()
+        .includes(editMenuSearch.toLowerCase());
+
+    if (!searchMatch) {
+      return false;
+    }
+
+    if (editMenuFilter === "all") {
+      return true;
+    }
+
+    if (editMenuFilter === "pork") {
+      return menu.name.includes("หมู");
+    }
+
+    if (editMenuFilter === "beef") {
+      return menu.name.includes("เนื้อ");
+    }
+
+    if (editMenuFilter === "other") {
+      return (
+        !menu.name.includes("หมู") &&
+        !menu.name.includes("เนื้อ")
+      );
+    }
+
+    return true;
+  });
+
+
+
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
@@ -1062,6 +1110,8 @@ export default function OrdersPage() {
             setEditingOrder(null);
             setEditItems([]);
             setShowEditMenu(false);
+            setEditMenuSearch("");
+            setEditMenuFilter("all");
           }}
           className="
             text-2xl
@@ -1413,24 +1463,85 @@ export default function OrdersPage() {
           {showEditMenu ? "✕ ปิดรายการเมนู" : "➕ เพิ่มเมนู"}
         </button>
 
-        {showEditMenu && (
+          {showEditMenu && (
 
-          <div
-            className="
-              mt-3
-              max-h-80
-              overflow-y-auto
-              rounded-2xl
-              border
-              bg-white
-              p-3
-              shadow
-            "
-          >
+            <div
+              className="
+                mt-3
+                max-h-80
+                overflow-y-auto
+                rounded-2xl
+                border
+                bg-white
+                p-3
+                shadow
+              "
+            >
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {/* 🔍 ช่องค้นหา */}
+              <input
+                type="text"
+                value={editMenuSearch}
+                onChange={(e) =>
+                  setEditMenuSearch(e.target.value)
+                }
+                placeholder="🔍 ค้นหาเมนู..."
+                className="
+                  mb-3
+                  w-full
+                  rounded-xl
+                  border
+                  border-gray-300
+                  px-4
+                  py-3
+                  outline-none
+                  focus:border-orange-500
+                  focus:ring-2
+                  focus:ring-orange-200
+                "
+              />
 
-              {menuList.map((menu) => (
+              {/* 🥩 Filter */}
+              <div className="mb-3 flex gap-2 overflow-x-auto">
+
+                <button
+                  type="button"
+                  onClick={() => setEditMenuFilter("all")}
+                  className="shrink-0 rounded-xl bg-orange-500 px-4 py-2 font-bold text-white"
+                >
+                  🍜 ทั้งหมด
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEditMenuFilter("pork")}
+                  className="shrink-0 rounded-xl bg-pink-500 px-4 py-2 font-bold text-white"
+                >
+                  🐷 หมู
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEditMenuFilter("beef")}
+                  className="shrink-0 rounded-xl bg-red-600 px-4 py-2 font-bold text-white"
+                >
+                  🐮 เนื้อ
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEditMenuFilter("other")}
+                  className="shrink-0 rounded-xl bg-green-500 px-4 py-2 font-bold text-white"
+                >
+                  📦 อื่นๆ
+                </button>
+
+              </div>
+
+              {/* เมนูเดิม */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+
+              {filteredEditMenus.map((menu) => (
 
                 <button
                   key={menu.id}
@@ -1526,6 +1637,8 @@ export default function OrdersPage() {
             setEditingOrder(null);
             setEditItems([]);
             setShowEditMenu(false);
+            setEditMenuSearch("");
+            setEditMenuFilter("all");
           }}
           className="
             rounded-xl
