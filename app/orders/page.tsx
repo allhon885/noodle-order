@@ -58,31 +58,55 @@ export default function OrdersPage() {
   const [editMenuFilter, setEditMenuFilter] =
     useState<"all" | "pork" | "beef" | "other">("all");
 
+
   const loadOrders = async () => {
-
     try {
+      const response = await fetch("/api/orders", {
+        cache: "no-store",
+      });
 
-      const response =
-        await fetch("/api/orders", {
-          cache: "no-store",
-        });
-
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (response.ok) {
-
         setOrders(data);
 
+        // ตรวจสอบว่ามีการส่งรหัสออเดอร์มาหรือไม่
+        const params = new URLSearchParams(
+          window.location.search
+        );
+
+        const editId = params.get("edit");
+
+        if (editId) {
+          const selectedOrder = data.find(
+            (order: Order) =>
+              String(order.id) === editId
+          );
+
+          if (selectedOrder) {
+            // เปิดหน้าต่างแก้ไขออเดอร์ที่เลือก
+            await openEditOrder(selectedOrder);
+
+            // ลบรหัสออกจาก URL เพื่อไม่ให้เปิดซ้ำ
+            params.delete("edit");
+
+            const query = params.toString();
+
+            window.history.replaceState(
+              null,
+              "",
+              window.location.pathname +
+                (query ? `?${query}` : "") +
+                window.location.hash
+            );
+          }
+        }
       }
-
     } catch (error) {
-
       console.error(error);
-
     }
-
   };
+
 
   const loadTables = async () => {
   try {

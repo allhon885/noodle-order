@@ -85,6 +85,20 @@ maximumFractionDigits:2
 };
 
 
+function bangkokDate(value: string | Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(value));
+
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
 
 
 
@@ -108,10 +122,8 @@ useState<Order|null>(null);
   // วันที่ที่เลือกดูใบเสร็จ
   // =========================
 
-  const [selectedDate, setSelectedDate] =
-    useState(
-      new Date().toISOString().split("T")[0]
-    );
+const [selectedDate, setSelectedDate] =
+  useState(() => bangkokDate(new Date()));
 
 
 const loadData=async()=>{
@@ -225,25 +237,21 @@ loadData();
 
 
 
-  const paidOrders = orders.filter((order) => {
 
-    if (order.status !== "paid") {
-      return false;
-    }
+const paidOrders = orders.filter((order) => {
+  const isPaid =
+    order.status === "paid" ||
+    Boolean(order.payment_method);
 
-    const orderDate = new Intl.DateTimeFormat(
-      "en-CA",
-      {
-        timeZone: "Asia/Bangkok",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }
-    ).format(new Date(order.created_at));
+  if (!isPaid || !order.created_at) {
+    return false;
+  }
 
-    return orderDate === selectedDate;
+  const orderDate = bangkokDate(order.created_at);
 
-  });
+  return orderDate === selectedDate;
+});
+
 
 
 
@@ -287,19 +295,12 @@ mx-auto
   />
 
   <button
-    onClick={() => {
 
-      const now = new Date();
+  onClick={() => {
+    setSelectedDate(bangkokDate(new Date()));
+    setSelected(null);
+  }}
 
-      setSelectedDate([
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, "0"),
-        String(now.getDate()).padStart(2, "0"),
-      ].join("-"));
-
-      setSelected(null);
-
-    }}
     className="
       rounded-xl
       bg-orange-500
